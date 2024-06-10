@@ -1,0 +1,12 @@
+{
+  "domain": "powernudge",
+  "name": "power nudge",
+  "codeowners": [
+    "@ludeeus"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/ludeeus/powernudge",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/ludeeus/powernudge/issues",
+  "version": "0.0.0"
+}
