@@ -8,5 +8,6 @@
   "documentation": "https://github.com/ludeeus/powernudge",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/ludeeus/powernudge/issues",
-  "version": "0.0.0"
+  "version": "0.0.0",
+  "requirements": ["croniter==2.0.2"]
 }
