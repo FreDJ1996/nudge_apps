@@ -22,10 +22,17 @@ from .const import (
 
 GOAL_TYPES = ["TAG", "MONAT", "JAHR"]
 
+NUDGE_TYPES = [
+    "Strom",
+    "Wasser",
+    "Gas"
+]
 
 DATA_SCHEMA = vol.Schema(
     {
-        vol.Required(CONF_NAME): selector.TextSelector(),
+        vol.Required(CONF_NAME): selector.SelectSelector(
+            selector.SelectSelectorConfig(options=NUDGE_TYPES),
+        ),
         vol.Required(CONF_SOURCE_SENSOR): selector.EntitySelector(
             selector.EntitySelectorConfig(domain=SENSOR_DOMAIN),
         ),
@@ -37,25 +44,17 @@ DATA_SCHEMA = vol.Schema(
                 unit_of_measurement="days",
             ),
         ),
-        vol.Required(
-            CONF_METER_NET_CONSUMPTION
-        ): selector.BooleanSelector(),
-        vol.Required(
-            CONF_METER_DELTA_VALUES
-        ): selector.BooleanSelector(),
-        vol.Required(
-            CONF_METER_PERIODICALLY_RESETTING
-        ): selector.BooleanSelector(),
-        vol.Optional(
-            CONF_SENSOR_ALWAYS_AVAILABLE
-        ): selector.BooleanSelector(),
-        vol.Required(CONF_GOAL_TYPE): selector.SelectSelector(
-            selector.SelectSelectorConfig(options=GOAL_TYPES)
+        vol.Required(CONF_METER_NET_CONSUMPTION): selector.BooleanSelector(),
+        vol.Required(CONF_METER_DELTA_VALUES): selector.BooleanSelector(),
+        vol.Required(CONF_METER_PERIODICALLY_RESETTING): selector.BooleanSelector(),
+        vol.Optional(CONF_SENSOR_ALWAYS_AVAILABLE): selector.BooleanSelector(),
+        vol.Optional(CONF_SOURCE_PERSON): selector.EntitySelector(
+            selector.EntityFilterSelectorConfig(domain="person")
         ),
         vol.Required(CONF_NUDGE_GOAL): selector.NumberSelector(
             selector.NumberSelectorConfig(
-                min=0,
-                max=1000,
+                min=1000,
+                max=10000,
                 mode=selector.NumberSelectorMode.SLIDER,
                 unit_of_measurement="kWh",
             )
@@ -76,8 +75,14 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(self, user_input=None):
         errors = {}
         if user_input is not None:
+            if CONF_SOURCE_PERSON in user_input:
+                name_of_person = str(user_input[CONF_SOURCE_PERSON])
+                name_of_person = name_of_person.rsplit(".",1)[1]
+                title = user_input[CONF_NAME]+"_"+str(name_of_person)
+            else:
+                title = user_input[CONF_NAME]
             return self.async_create_entry(
-                title=user_input[CONF_NAME], data=user_input
+                title=title, data=user_input
             )
 
         return self.async_show_form(

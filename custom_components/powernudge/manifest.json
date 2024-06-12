@@ -1,13 +1,12 @@
 {
   "domain": "powernudge",
   "name": "power nudge",
-  "codeowners": [
-    "@ludeeus"
-  ],
+  "codeowners": [],
   "config_flow": true,
   "documentation": "https://github.com/ludeeus/powernudge",
-  "iot_class": "cloud_polling",
+  "iot_class": "local_push",
   "issue_tracker": "https://github.com/ludeeus/powernudge/issues",
   "version": "0.0.0",
-  "requirements": ["croniter==2.0.2"]
+  "requirements": ["croniter==2.0.2"],
+  "platforms": ["sensor"]
 }
