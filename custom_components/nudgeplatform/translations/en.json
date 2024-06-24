@@ -1,0 +1,28 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Benutzer erstellen",
+                "data": {
+                    "username": "Benutzername"
+                }
+            }
+        },
+        "error": {
+            "username_required": "Bitte geben Sie einen Benutzernamen ein"
+        },
+        "abort": {
+            "already_configured": "Ein Benutzer mit diesem Namen existiert bereits"
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "Benutzer bearbeiten",
+                "data": {
+                    "username": "Benutzername"
+                }
+            }
+        }
+    }
+}

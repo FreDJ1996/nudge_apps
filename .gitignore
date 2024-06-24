@@ -5,6 +5,7 @@ __pycache__
 */build/*
 */dist/*
 
+custom_components/hacs/
 
 # misc
 .coverage
@@ -16,3 +17,5 @@ coverage.xml
 # Home Assistant configuration
 config/*
 !config/configuration.yaml
+config/configuration.yaml
+.gitignore
