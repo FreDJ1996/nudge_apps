@@ -15,6 +15,18 @@
             "already_configured": "Ein Benutzer mit diesem Namen existiert bereits"
         }
     },
+    "services": {
+        "add_points_to_user": {
+            "name": "Punkte Nutzer",
+            "description": "Punkte zu Nutzer hinzufügen",
+            "fields": {
+                "points_for_user": {
+                    "name": "Punkte fuer Nutzer",
+                    "description": "Punkte zum hinzufuegen"
+                }
+            }
+        }
+    },
     "options": {
         "step": {
             "init": {

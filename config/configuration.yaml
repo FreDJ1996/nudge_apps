@@ -12,21 +12,18 @@ logger:
     custom_components.powernudge: debug
 sensor:
   - platform: simulated
-    name: "Simulierter Stromverbrauch (kWh)"
-    unit: kWh
-    amplitude: 15  # Größere Schwankungen für den Tagesverlauf
-    mean: 30       # Durchschnittlicher Tagesverbrauch in kWh
-    spread: 5      # Zufällige Abweichungen
+    name: "Simulierter Stromverbrauch (W)"
+    unit: kw
+    amplitude: 3  # Größere Schwankungen für den Tagesverlauf
+    mean: 1       # Durchschnittlicher Tagesverbrauch in kWh
+    spread: 2      # Zufällige Abweichungen
     seed: 12345    # Für reproduzierbare Ergebnisse
 
-    # Tagesverlauf simulieren (grobe Annäherung)
-    daily_variation:
-      - { from: '00:00', to: '06:00', mean_offset: -10 }  # Nachts weniger Verbrauch
-      - { from: '06:00', to: '09:00', mean_offset: 5 }   # Morgens mehr Verbrauch
-      - { from: '09:00', to: '17:00', mean_offset: -2 }   # Tagsüber etwas weniger
-      - { from: '17:00', to: '23:00', mean_offset: 8 }   # Abends mehr Verbrauch
 
-    # Wochenverlauf simulieren (vereinfacht)
-    weekday_variation:
-      - { weekday: [5, 6], mean_offset: 3 }  # Am Wochenende etwas mehr Verbrauch
-
+resources:
+  - url: /local/apexcharts-card.js?v=2.0.4
+    type: module
+  - url: /local/mini-graph-card-bundle.js?v=0.12.1
+    type: module
+  - url: /hacsfiles/bar-card/bar-card.js
+    type: module

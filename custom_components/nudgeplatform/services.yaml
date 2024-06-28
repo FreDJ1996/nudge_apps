@@ -1,0 +1,10 @@
+add_points_to_user:
+  name: Add Points
+  description: Add Points to Nudge User
+  target:
+    entity:
+      domain: sensor
+      integration: nudgeplatform
+  fields:
+    points:
+      required: true

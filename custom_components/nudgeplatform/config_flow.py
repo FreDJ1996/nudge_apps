@@ -1,15 +1,19 @@
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.core import callback
-from .const import DOMAIN,CONF_NUDGE_PERSON
+
+from .const import CONF_NUDGE_PERSON, DOMAIN
+
+DATA_SCHEMA = vol.Schema({vol.Required(CONF_NUDGE_PERSON): str})
 
 
-class UserCreatorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Config flow for user creation."""
 
     VERSION = 1
 
-    async def async_step_user(self, user_input=None):
+    CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_PUSH
+
+    async def async_step_user(self, user_input=None) ->config_entries.ConfigFlowResult:
         """Handle the initial step."""
         errors = {}
 
@@ -24,7 +28,6 @@ class UserCreatorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="user",
-            data_schema=vol.Schema({vol.Required(CONF_NUDGE_PERSON): str}),
+            data_schema=DATA_SCHEMA,
             errors=errors,
         )
-
