@@ -48,8 +48,8 @@ DATA_SCHEMA = vol.Schema(
         vol.Required(CONF_METER_DELTA_VALUES): selector.BooleanSelector(),
         vol.Required(CONF_METER_PERIODICALLY_RESETTING): selector.BooleanSelector(),
         vol.Optional(CONF_SENSOR_ALWAYS_AVAILABLE): selector.BooleanSelector(),
-        vol.Optional(CONF_SOURCE_PERSON): selector.EntitySelector(
-            selector.EntityFilterSelectorConfig(domain="person")
+        vol.Required(CONF_SOURCE_PERSON): selector.EntitySelector(
+            selector.EntityFilterSelectorConfig(integration="nudgeplatform")
         ),
         vol.Required(CONF_NUDGE_GOAL): selector.NumberSelector(
             selector.NumberSelectorConfig(

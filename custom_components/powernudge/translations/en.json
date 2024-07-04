@@ -22,7 +22,7 @@
                     "offset": "Offset the day of a monthly meter reset.",
                     "periodically_resetting": "Enable if the source may periodically reset to 0, for example at boot of the measuring device. If disabled, new readings are directly recorded after data inavailability.",
                     "tariffs": "A list of supported tariffs, leave empty if only a single tariff is needed.",
-                    "person": "Configure person the nudge belongs to"
+                    "person": "Configure person from nudgeplatform the nudge belongs to"
                 },
                 "description": "Create a sensor which tracks consumption of various utilities (e.g., energy, gas, water, heating) over a configured period of time, typically monthly. The utility meter sensor optionally supports splitting the consumption by tariffs, in that case one sensor for each tariff is created as well as a select entity to choose the current tariff.",
                 "title": "Add Power Nudge Sensor"
