@@ -10,14 +10,9 @@ logger:
   default: info
   logs:
     custom_components.powernudge: debug
-sensor:
-  - platform: simulated
-    name: "Simulierter Stromverbrauch (W)"
-    unit: kw
-    amplitude: 3  # Größere Schwankungen für den Tagesverlauf
-    mean: 1       # Durchschnittlicher Tagesverbrauch in kWh
-    spread: 2      # Zufällige Abweichungen
-    seed: 12345    # Für reproduzierbare Ergebnisse
+
+
+demo:
 
 
 resources:

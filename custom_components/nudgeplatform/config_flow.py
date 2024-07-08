@@ -3,7 +3,10 @@ from homeassistant import config_entries
 
 from .const import CONF_NUDGE_PERSON, DOMAIN
 
-DATA_SCHEMA = vol.Schema({vol.Required(CONF_NUDGE_PERSON): str})
+DATA_SCHEMA = vol.Schema(
+    {vol.Required(CONF_NUDGE_PERSON): str}
+
+    )
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):

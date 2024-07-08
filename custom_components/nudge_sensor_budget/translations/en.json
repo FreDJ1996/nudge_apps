@@ -1,0 +1,25 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Budget erstellen",
+                "description": "Erstelle ein Budget für einen Energie Sensor",
+                "data": {
+                    "username": "Person Nudge",
+                    "budget_yearly":"Jährliches Budget"
+                },
+                "data_description":
+                {
+                    "username": "Person für welche der Nudge erstellt wird",
+                    "budget_yearly": "Jährliches Budget für die ausgewählten  Energiesensoren"
+                }
+            }
+        },
+        "error": {
+            "username_required": "Bitte geben Sie einen Benutzernamen ein"
+        },
+        "abort": {
+            "already_configured": "Ein Benutzer mit diesem Namen existiert bereits"
+        }
+    }
+}
