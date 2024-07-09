@@ -13,7 +13,7 @@ logger:
 
 
 demo:
-
+statistic_service:
 
 resources:
   - url: /local/apexcharts-card.js?v=2.0.4

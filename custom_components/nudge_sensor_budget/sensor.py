@@ -1,4 +1,4 @@
-from custom_components.nudgeplatform.sensor import Budget
+from custom_components.nudgeplatform.sensor import Budget,BudgetType
 from custom_components.nudgeplatform.const import CONF_BUDGET_YEARLY,CONF_NUDGE_PERSON,CONF_TRACKED_SENSOR_ENTITIES
 
 from homeassistant.core import HomeAssistant
@@ -49,4 +49,18 @@ async def async_setup_entry(
     else:
         device_info = None
 
-    async_add_entities({Budget(entry_id=entry_id, yearly_goal=yearly_goal,entity_id_user=entity_id_user,budget_entities=budget_entities,attr_name=config_entry.title,device_info=device_info)})
+
+    budget_goals = Budget.calculate_goals(yearly_goal=yearly_goal)
+    budgets = [
+        Budget(
+            entry_id=entry_id,
+            goal=budget_goals[budget_type],
+            entity_id_user=entity_id_user,
+            budget_entities=budget_entities,
+            attr_name=f"{budget_type.name}_{config_entry.title}" ,
+            device_info=device_info,
+            budget_type=budget_type
+        ) for budget_type in BudgetType
+    ]
+
+    async_add_entities(budgets)
