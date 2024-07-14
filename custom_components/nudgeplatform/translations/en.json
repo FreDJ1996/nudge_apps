@@ -1,29 +1,11 @@
 {
     "config": {
         "step": {
-            "user":{
-                "title": "Option auswählen",
-                "data": {
-                    "action": "Option wählen"
-                }
-            },
-            "createuser": {
+            "user": {
                 "title": "Benutzer erstellen",
                 "data": {
                     "username": "Benutzername"
                 }
-            }
-        },
-        "budget": {
-            "title": "Budget erstellen",
-            "description": "Erstelle ein Budget für einen Energie Sensor",
-            "data": {
-                "username": "Person Nudge",
-                "budget_yearly": "Jährliches Budget"
-            },
-            "data_description": {
-                "username": "Person für welche der Nudge erstellt wird",
-                "budget_yearly": "Jährliches Budget für die ausgewählten  Energiesensoren"
             }
         },
         "error": {

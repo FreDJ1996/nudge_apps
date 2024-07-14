@@ -1,0 +1,25 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Budget erstellen",
+                "description": "Erstelle ein Budget für einen Energie Sensor",
+                "data": {
+                    "number_persons":"Anzahl Personen",
+                    "last_year_consumed": "Letzter Verbrauch"
+                },
+                "data_description":
+                {
+                    "number_persons": "Anzahl der Personen im Haushalt",
+                    "last_year_consumed": "Verbrauch in kWh des letzten Jahres"
+                }
+            }
+        },
+        "error": {
+            "energy_dashboard_not_configured": "The Energy Dashboard is not configured. Please enable it in Home Assistant settings before proceeding."
+        }
+        },
+        "abort": {
+            "already_configured": "Ein Benutzer mit diesem Namen existiert bereits"
+        }
+    }

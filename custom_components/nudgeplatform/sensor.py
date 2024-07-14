@@ -4,6 +4,7 @@ import logging
 from typing import TYPE_CHECKING, Dict, Final
 from zoneinfo import ZoneInfo
 
+from numpy import integer
 from pytz import UTC
 import pytz
 import voluptuous as vol
@@ -50,7 +51,6 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Initialize nudgeplatform config entry."""
-    config_entry.async_on_unload(config_entry.add_update_listener(update_listener))
     entities = []
 
     entities.append(
@@ -100,9 +100,33 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-async def update_listener(hass: HomeAssistant, entry: ConfigEntry):
-    """Handle options update."""
-    await hass.config_entries.async_reload(entry.entry_id)
+
+class Score(SensorEntity):
+
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    def __init__(self,username:str,
+        device_info: DeviceInfo) -> None:
+        super().__init__()
+        self._attr_device_info = device_info
+        self.username = username
+        self._attr_native_value = 0
+        self.extra_state_attributes = {}
+
+   # def to_dict(self):
+     #   return {"user":}
+
+
+class Ranking(SensorEntity):
+
+    def __init__(self,name:str, scores: list[Score]) -> None:
+
+        self._attr_should_poll = True;
+        if scores is not None:
+            self._attr_extra_state_attributes = scores.__dict__
+
+  #  def async_update()
+     #   for score
 
 
 class BudgetType(Enum):
@@ -161,11 +185,11 @@ class Budget(SensorEntity):
         self,
         entry_id: str,
         goal: float,
-        entity_id_user: str,
         budget_entities: set[str],
         attr_name: str,
         device_info: DeviceInfo | None,
         budget_type: BudgetType,
+        entity_id_user: str = "",
         show_actual: bool = False,
     ) -> None:
         super().__init__()
@@ -238,6 +262,8 @@ class Budget(SensorEntity):
 
     @callback
     async def send_points_to_user(self, now: datetime) -> None:
+        if self._user_entity_id == "":
+            return
         points = -1 if self._actual > self._goal else 1
         await self.hass.services.async_call(
             domain=DOMAIN,
@@ -257,7 +283,7 @@ class User(SensorEntity):
         self._attr_unique_id = f"{entry_id}_User"
         self.username = username
         self._attr_name = self.username
-        self._attr_native_value: int = 0
+        self._attr_native_value: int
         self.badges: list[str] = []
         self.level: int = 0
         self._attr_device_info = DeviceInfo(
