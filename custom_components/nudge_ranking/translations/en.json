@@ -2,7 +2,7 @@
     "config": {
         "step": {
             "user": {
-                "ranking_persons": "Budget erstellen",
+                "title": "Budget erstellen",
                 "description": "Erstelle ein Budget für einen Energie Sensor",
                 "data": {
                     "username": "Person Nudge",

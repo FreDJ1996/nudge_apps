@@ -14,6 +14,13 @@ from .const import (
     DOMAIN,
 )
 
+BADGES = [
+    "Sparfuchs",
+    "Energiespar-Anfänger",
+    "Energieeffizienz-Experte",
+    "Nachhaltigkeits-Champion",
+]
+
 
 @callback
 async def async_setup_entry(

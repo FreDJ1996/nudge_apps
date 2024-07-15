@@ -3,7 +3,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.const import Platform
 
 
-PLATFORMS: list[Platform] = [Platform.SENSOR,Platform.NUMBER]
+PLATFORMS: list[Platform] = [Platform.NUMBER]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

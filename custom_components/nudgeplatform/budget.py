@@ -1,7 +1,7 @@
 from enum import Enum, auto
 import enum
 import logging
-from typing import TYPE_CHECKING, Dict, Final
+from typing import TYPE_CHECKING, Dict, Final, List
 from zoneinfo import ZoneInfo
 
 from numpy import integer
@@ -36,76 +36,6 @@ from .number import User
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 _LOGGER = logging.getLogger(__name__)
-
-BADGES = [
-    "Sparfuchs",
-    "Energiespar-Anfänger",
-    "Energieeffizienz-Experte",
-    "Nachhaltigkeits-Champion",
-]
-
-
-@callback
-async def async_setup_entry(
-    hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
-) -> None:
-    """Initialize nudgeplatform config entry."""
-    entities = []
-
-    entry_id = config_entry.entry_id
-    yearly_goal = config_entry.options.get(CONF_BUDGET_YEARLY)
-    entity_id_user = config_entry.options.get(CONF_NUDGE_PERSON)
-    budget_entities = config_entry.options.get(CONF_TRACKED_SENSOR_ENTITIES)
-
-    if entry_id is not None and yearly_goal is not None and entity_id_user is not None and budget_entities is not None:
-
-        budget_goals = Budget.calculate_goals(yearly_goal=yearly_goal)
-
-        device_info= DeviceInfo(identifiers={(DOMAIN, entry_id)})
-
-        budgets = [
-            Budget(
-                entry_id=config_entry.entry_id,
-                goal=budget_goals[budget_type],
-                entity_id_user=entity_id_user,
-                budget_entities=budget_entities,
-                attr_name=f"{budget_type.name}_{config_entry.title}",
-                device_info=device_info,
-                budget_type=budget_type,
-            )
-            for budget_type in BudgetType
-        ]
-
-        entities.append(budgets)
-
-    async_add_entities(entities)
-
-
-class Ranking(SensorEntity):
-
-    _attr_should_poll = True
-    def __init__(self, user_score_entities: list[str], nameRanking: str) -> None:
-        self._attr_name = "Ranking"
-        self._attr_unique_id = nameRanking
-        self._attr_native_value = None
-        self._user_score_entities = user_score_entities
-
-    def async_update(self)-> None:
-        ranking = {}
-        for entity_ids in self._user_score_entities:
-            state = self.hass.states.get(entity_ids)
-            if state:
-                try:
-                    value = int(state.state)
-                    ranking[entity_ids] = value
-                except ValueError:
-                    pass  # Nicht-numerischen Wert ignorieren
-
-        sorted_ranking = sorted(ranking.items(), key=lambda item: item[1], reverse=True)
-        self._attr_native_value = sorted_ranking[0][1] if sorted_ranking else None
-        self._attr_extra_state_attributes = dict(sorted_ranking)
 
 
 class BudgetType(Enum):

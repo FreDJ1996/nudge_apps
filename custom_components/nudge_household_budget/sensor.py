@@ -1,15 +1,20 @@
-from custom_components.nudgeplatform.sensor import Budget,BudgetType
-from const import CONF_LAST_YEAR_CONSUMED,CONF_NUMBER_OF_PERSONS, DOMAIN
-from homeassistant.core import HomeAssistant
+from const import CONF_LAST_YEAR_CONSUMED, CONF_NUMBER_OF_PERSONS, DOMAIN
+from homeassistant.components.energy.sensor import async_get_manager
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers import (
     device_registry as dr,
+)
+from homeassistant.helpers import (
     entity_platform,
+)
+from homeassistant.helpers import (
     entity_registry as er,
 )
-from homeassistant.components.energy.sensor import async_get_manager
-from homeassistant.helpers.device_registry import DeviceInfo,DeviceEntryType
+from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+from custom_components.nudgeplatform.budget import Budget, BudgetType
 
 
 async def async_setup_entry(
@@ -31,7 +36,7 @@ async def async_setup_entry(
 
     if energy_manager_data is not None:
         budget_entities = energy_manager_data.get("")
-        
+
     budget_entities = set()
 
 
