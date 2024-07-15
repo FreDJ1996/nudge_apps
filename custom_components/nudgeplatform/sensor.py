@@ -7,6 +7,7 @@ from zoneinfo import ZoneInfo
 from numpy import integer
 from pytz import UTC
 import pytz
+from sqlalchemy import true
 import voluptuous as vol
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.sensor.const import SensorStateClass, SensorDeviceClass
@@ -27,12 +28,12 @@ from homeassistant.components.recorder.util import get_instance
 from .const import (
     CONF_BUDGET_YEARLY,
     CONF_NUDGE_PERSON,
-    SERVICE_ADD_POINTS_FOR_USER,
     DOMAIN,CONF_BUDGET_YEARLY,CONF_NUDGE_PERSON,CONF_TRACKED_SENSOR_ENTITIES,
 )
 from homeassistant.helpers.device_registry import DeviceInfo, DeviceEntryType
 from homeassistant.util import dt as dt_util
-
+from .number import User
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -52,13 +53,6 @@ async def async_setup_entry(
 ) -> None:
     """Initialize nudgeplatform config entry."""
     entities = []
-
-    entities.append(
-        User(
-            entry_id=config_entry.entry_id,
-            username=config_entry.data[CONF_NUDGE_PERSON],
-        )
-    )
 
     entry_id = config_entry.entry_id
     yearly_goal = config_entry.options.get(CONF_BUDGET_YEARLY)
@@ -86,47 +80,32 @@ async def async_setup_entry(
 
         entities.append(budgets)
 
-
-    # Register the service
-    platform = entity_platform.async_get_current_platform()
-    platform.async_register_entity_service(
-        SERVICE_ADD_POINTS_FOR_USER,
-        {
-            vol.Required("points"): cv.positive_int,
-        },
-        "async_add_points_to_user",
-    )
-
     async_add_entities(entities)
-
-
-
-class Score(SensorEntity):
-
-    _attr_state_class = SensorStateClass.MEASUREMENT
-
-    def __init__(self,username:str,
-        device_info: DeviceInfo) -> None:
-        super().__init__()
-        self._attr_device_info = device_info
-        self.username = username
-        self._attr_native_value = 0
-        self.extra_state_attributes = {}
-
-   # def to_dict(self):
-     #   return {"user":}
 
 
 class Ranking(SensorEntity):
 
-    def __init__(self,name:str, scores: list[Score]) -> None:
+    _attr_should_poll = True
+    def __init__(self, user_score_entities: list[str], nameRanking: str) -> None:
+        self._attr_name = "Ranking"
+        self._attr_unique_id = nameRanking
+        self._attr_native_value = None
+        self._user_score_entities = user_score_entities
 
-        self._attr_should_poll = True;
-        if scores is not None:
-            self._attr_extra_state_attributes = scores.__dict__
+    def async_update(self)-> None:
+        ranking = {}
+        for entity_ids in self._user_score_entities:
+            state = self.hass.states.get(entity_ids)
+            if state:
+                try:
+                    value = int(state.state)
+                    ranking[entity_ids] = value
+                except ValueError:
+                    pass  # Nicht-numerischen Wert ignorieren
 
-  #  def async_update()
-     #   for score
+        sorted_ranking = sorted(ranking.items(), key=lambda item: item[1], reverse=True)
+        self._attr_native_value = sorted_ranking[0][1] if sorted_ranking else None
+        self._attr_extra_state_attributes = dict(sorted_ranking)
 
 
 class BudgetType(Enum):
@@ -152,7 +131,7 @@ class Budget(SensorEntity):
     """Nudget For Person"""
 
     _attr_state_class = SensorStateClass.MEASUREMENT
-
+    _attr_should_poll = True
     @staticmethod
     def calculate_goals(yearly_goal: float) -> dict[BudgetType, float]:
         goals = {BudgetType.Yearly: yearly_goal}
@@ -212,8 +191,6 @@ class Budget(SensorEntity):
         async_track_time_change(
             self.hass, self.send_points_to_user, hour=23, minute=59, second=59
         )
-        # Regelmäßig die Statistiken der Entities ziehen
-        async_track_time_interval(self.hass, self.update_actual, timedelta(seconds=10))
 
     @property
     def extra_state_attributes(self) -> dict:
@@ -230,8 +207,8 @@ class Budget(SensorEntity):
 
         return attributes
 
-    @callback
-    async def update_actual(self, now: datetime) -> None:
+
+    async def async_update(self) -> None:
         statistic_ids = self._budget_entities
         period = STATISTIC_PERIODS[self._budget_type]
         start_time = self.get_start_time()
@@ -273,33 +250,3 @@ class Budget(SensorEntity):
         )
 
 
-class User(SensorEntity):
-    """Nudge Person for Nudging."""
-
-    _attr_state_class = SensorStateClass.TOTAL
-
-    def __init__(self, entry_id: str, username: str) -> None:
-        super().__init__()
-        self._attr_unique_id = f"{entry_id}_User"
-        self.username = username
-        self._attr_name = self.username
-        self._attr_native_value: int
-        self.badges: list[str] = []
-        self.level: int = 0
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, entry_id)},
-            entry_type=DeviceEntryType.SERVICE,
-            name=self.username,
-        )
-
-    async def async_add_points_to_user(self, points: int) -> None:
-        self._attr_native_value += points
-        self.async_write_ha_state()
-
-    async def async_add_badge_to_user(self, badge: str) -> None:
-        self.badges.append(badge)
-
-    @property
-    def extra_state_attributes(self) -> dict:
-        """Return the state attributes of the sensor."""
-        return {"badges": self.badges}

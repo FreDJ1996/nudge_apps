@@ -8,12 +8,9 @@ homeassistant:
 # https://www.home-assistant.io/integrations/logger/
 logger:
   default: info
-  logs:
-    custom_components.powernudge: debug
 
 
 demo:
-statistic_service:
 
 resources:
   - url: /local/apexcharts-card.js?v=2.0.4
@@ -22,7 +19,7 @@ resources:
     type: module
   - url: /hacsfiles/bar-card/bar-card.js
     type: module
-    
+
 sensor:
   - platform: rest
     name: BUND Scoreboard2
