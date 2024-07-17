@@ -32,6 +32,10 @@ from .const import (
 from homeassistant.helpers.device_registry import DeviceInfo, DeviceEntryType
 from homeassistant.util import dt as dt_util
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from datetime import timedelta
+from custom_components.nudgeplatform.const import DOMAIN as NUDGEPLATFORM_DOMAIN, SERVICE_SET_RANK_FOR_USER
+
+SCAN_INTERVAL = timedelta(minutes=1)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -58,18 +62,36 @@ class Ranking(SensorEntity):
         self._attr_unique_id = entry_id
         self._attr_native_value = None
         self._user_score_entities = user_score_entities
+        self.ranking = []
 
-    def async_update(self) -> None:
-        ranking = {}
-        for entity_ids in self._user_score_entities:
-            state = self.hass.states.get(entity_ids)
-            if state:
-                try:
-                    value = int(state.state)
-                    ranking[entity_ids] = value
-                except ValueError:
-                    pass  # Nicht-numerischen Wert ignorieren
+    async def send_rank_to_user(self, user_entity_id:str,ranking_position: int, ranking_length: int) -> None:
+        await self.hass.services.async_call(
+            domain=NUDGEPLATFORM_DOMAIN,
+            service=SERVICE_SET_RANK_FOR_USER,
+            service_data={
+                "ranking_position": ranking_position,
+                "ranking_length": ranking_length,
+            },
+            target={"entity_id": user_entity_id},
+        )
 
-        sorted_ranking = sorted(ranking.items(), key=lambda item: item[1], reverse=True)
-        self._attr_native_value = sorted_ranking[0][1] if sorted_ranking else None
-        self._attr_extra_state_attributes = dict(sorted_ranking)
+async def async_update(self) -> None:
+    ranking = {}
+    for entity_id in self._user_score_entities:  # Direkte Iteration über IDs
+        state = self.hass.states.get(entity_id)
+        if state and state.state.isdigit():  # Direkte Prüfung auf Zahl
+            ranking[entity_id] = {"name": state.name, "value": int(state.state)}
+
+    sorted_ranking = sorted(
+        ranking.items(), key=lambda item: item[1]["value"], reverse=True
+    )
+
+    if sorted_ranking: 
+        self._attr_native_value = sorted_ranking[0][1]["value"]
+
+        list = []
+        for rank, (entity_id, value) in enumerate(sorted_ranking, start=1):
+            await self.send_rank_to_user(entity_id, rank, len(sorted_ranking))
+            list.append(value)
+
+        self._attr_extra_state_attributes = {"rank": list}

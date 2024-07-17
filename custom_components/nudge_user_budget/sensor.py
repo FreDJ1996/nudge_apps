@@ -1,4 +1,4 @@
-from custom_components.nudgeplatform.budget import Budget,BudgetType, Ranking
+from custom_components.nudgeplatform.budget import Budget,BudgetType
 from custom_components.nudgeplatform.const import CONF_BUDGET_YEARLY,CONF_NUDGE_PERSON,CONF_TRACKED_SENSOR_ENTITIES
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry

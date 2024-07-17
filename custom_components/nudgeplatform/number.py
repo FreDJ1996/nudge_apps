@@ -7,20 +7,15 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.const import EntityCategory
-
+from homeassistant.helpers import entity_platform
+from homeassistant.helpers import config_validation as cv
+import voluptuous as vol
 
 from .const import (
     CONF_NUDGE_PERSON,
     DOMAIN,
+    SERVICE_SET_RANK_FOR_USER,
 )
-
-BADGES = [
-    "Sparfuchs",
-    "Energiespar-Anfänger",
-    "Energieeffizienz-Experte",
-    "Nachhaltigkeits-Champion",
-]
-
 
 @callback
 async def async_setup_entry(
@@ -37,6 +32,17 @@ async def async_setup_entry(
             entry_id=config_entry.entry_id,
             username=config_entry.data[CONF_NUDGE_PERSON],
         )
+    )
+
+        # Register the service
+    platform = entity_platform.async_get_current_platform()
+    platform.async_register_entity_service(
+        SERVICE_SET_RANK_FOR_USER,
+        {
+            vol.Required("ranking_position"): cv.positive_int,
+            vol.Required("ranking_length"): cv.positive_int,
+        },
+        "set_ranking_position",
     )
 
     async_add_entities(entities)
@@ -57,6 +63,15 @@ class User(RestoreNumber):
             entry_type=DeviceEntryType.SERVICE,
             name=username,
         )
+        self.ranking_position = "0/0"
+
+    async def set_ranking_position(self, ranking_position: int, ranking_length: int) -> None:
+        self.ranking_position = f"{ranking_position}/{ranking_length}"
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        """Return the state attributes of the sensor."""
+        return {"rank": self.ranking_position}
 
     async def async_added_to_hass(self) -> None:
         """Restore last state."""

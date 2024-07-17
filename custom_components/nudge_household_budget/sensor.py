@@ -1,5 +1,6 @@
-from const import CONF_LAST_YEAR_CONSUMED, CONF_NUMBER_OF_PERSONS, DOMAIN
-from homeassistant.components.energy.sensor import async_get_manager
+from .const import CONF_LAST_YEAR_CONSUMED, CONF_NUMBER_OF_PERSONS, DOMAIN
+import homeassistant.components.energy.data as energydata
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import (
@@ -30,14 +31,16 @@ async def async_setup_entry(
         identifiers={(DOMAIN, entry_id)}, entry_type=DeviceEntryType.SERVICE
     ,name="Nudge Household")
 
-    energy_manager = await async_get_manager(hass)
+    energy_manager = await energydata.async_get_manager(hass)
+    budget_entities = set()
 
-    energy_manager_data = energy_manager.data
+    energy_manager_data: energydata.EnergyPreferences|None = energy_manager.data
 
     if energy_manager_data is not None:
-        budget_entities = energy_manager_data.get("")
-
-    budget_entities = set()
+        energy_sources: list[energydata.SourceType] = energy_manager_data["energy_sources"]
+        for source in energy_sources:
+            if source["type"] == "grid":
+               budget_entities.add(source["flow_from"][0]["stat_energy_from"])
 
 
     budget_goals = Budget.calculate_goals(yearly_goal=yearly_goal)
