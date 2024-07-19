@@ -1,5 +1,7 @@
 """Constants for nudgeplatform."""
 
+from enum import Enum, auto
+
 DOMAIN = "nudgeplatform"
 
 CONF_CHOOSE_ACTION = "action"
@@ -15,3 +17,19 @@ BADGES = [
     "Energieeffizienz-Experte",
     "Nachhaltigkeits-Champion",
 ]
+
+
+class NudgePeriod(Enum):
+    Daily = auto()
+    Weekly = auto()
+    Monthly = auto()
+    Yearly = auto()
+
+
+class NudgeType(Enum):
+    ELECTRICITY_BUDGET = auto()
+    HEAT_BUDGET = auto()
+    WATER_BUDGET = auto()
+    AUTARKY_GOAL = auto()
+    CO2_BUDGET = auto()
+    MONEY_BUDGET = auto()

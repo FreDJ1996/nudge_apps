@@ -28,7 +28,11 @@ from homeassistant.components.recorder.util import get_instance
 from .const import (
     CONF_BUDGET_YEARLY,
     CONF_NUDGE_PERSON,
-    DOMAIN,CONF_BUDGET_YEARLY,CONF_NUDGE_PERSON,CONF_TRACKED_SENSOR_ENTITIES,
+    DOMAIN,
+    CONF_BUDGET_YEARLY,
+    CONF_NUDGE_PERSON,
+    CONF_TRACKED_SENSOR_ENTITIES,
+    NudgePeriod,
 )
 from homeassistant.helpers.device_registry import DeviceInfo, DeviceEntryType
 from homeassistant.util import dt as dt_util
@@ -38,23 +42,56 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 _LOGGER = logging.getLogger(__name__)
 
 
-class BudgetType(Enum):
-    Daily = auto()
-    Weekly = auto()
-    Monthly = auto()
-    Yearly = auto()
-
-
 STATISTIC_PERIODS = {
-    BudgetType.Daily: "day",
-    BudgetType.Weekly: "week",
-    BudgetType.Monthly: "month",
-    BudgetType.Yearly: "month",
+    NudgePeriod.Daily: "day",
+    NudgePeriod.Weekly: "week",
+    NudgePeriod.Monthly: "month",
+    NudgePeriod.Yearly: "month",
 }
 
 
-class NudgeType(Enum):
+class NudgeIcons(Enum):
     Energy = "mdi:lightning-bolt"
+
+def get_start_time(nudge_period: NudgePeriod) -> datetime:
+    now = dt_util.now()
+    if nudge_period == NudgePeriod.Daily:
+        start_time = now
+    if nudge_period == NudgePeriod.Weekly:
+        start_time = now - timedelta(
+            days=now.weekday()
+        )  # Zurück zum Wochenanfang (Montag)
+    elif nudge_period == NudgePeriod.Monthly:
+        start_time = now
+        start_time.replace(day=1)
+    elif nudge_period == NudgePeriod.Yearly:
+        start_time = now
+        start_time.replace(day=1, month=1)
+
+    return start_time.replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )  # Zeit auf 00:00 Uhr setzen
+
+
+class Goal(SensorEntity):
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_should_poll = True
+
+    def __init__(
+        self,
+        entry_id: str,
+        device_info: DeviceInfo,
+        attr_name: str,
+        nudge_period: NudgePeriod,
+    ) -> None:
+        super().__init__()
+        self._attr_unique_id = f"{entry_id}_{nudge_period.name}"
+        self._attr_native_value = 0
+        self._attr_native_unit_of_measurement = "%"
+        self._nudge_period = nudge_period
+        self._attr_name = attr_name
+        self._attr_device_info = device_info
+        self._last_update = datetime.now(tz=dt_util.DEFAULT_TIME_ZONE)
 
 
 class Budget(SensorEntity):
@@ -62,33 +99,16 @@ class Budget(SensorEntity):
 
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_should_poll = True
+
     @staticmethod
-    def calculate_goals(yearly_goal: float) -> dict[BudgetType, float]:
-        goals = {BudgetType.Yearly: yearly_goal}
-        goals[BudgetType.Daily] = yearly_goal / 365
-        goals[BudgetType.Weekly] = goals[BudgetType.Daily] * 7
-        goals[BudgetType.Monthly] = goals[BudgetType.Yearly] / 12
+    def calculate_goals(yearly_goal: float) -> dict[NudgePeriod, float]:
+        goals = {NudgePeriod.Yearly: yearly_goal}
+        goals[NudgePeriod.Daily] = yearly_goal / 365
+        goals[NudgePeriod.Weekly] = goals[NudgePeriod.Daily] * 7
+        goals[NudgePeriod.Monthly] = goals[NudgePeriod.Yearly] / 12
 
         return goals
 
-    def get_start_time(self) -> datetime:
-        now = dt_util.now()
-        if self._budget_type == BudgetType.Daily:
-            start_time = now
-        if self._budget_type == BudgetType.Weekly:
-            start_time = now - timedelta(
-                days=now.weekday()
-            )  # Zurück zum Wochenanfang (Montag)
-        elif self._budget_type == BudgetType.Monthly:
-            start_time = now
-            start_time.replace(day=1)
-        elif self._budget_type == BudgetType.Yearly:
-            start_time = now
-            start_time.replace(day=1, month=1)
-
-        return start_time.replace(
-            hour=0, minute=0, second=0, microsecond=0
-        )  # Zeit auf 00:00 Uhr setzen
 
     def __init__(
         self,
@@ -97,7 +117,7 @@ class Budget(SensorEntity):
         budget_entities: set[str],
         attr_name: str,
         device_info: DeviceInfo | None,
-        budget_type: BudgetType,
+        budget_type: NudgePeriod,
         entity_id_user: str = "",
         show_actual: bool = False,
     ) -> None:
@@ -107,7 +127,7 @@ class Budget(SensorEntity):
         self._show_actual = show_actual
         self._attr_name = attr_name
         self._goal = goal
-        self._attr_icon = NudgeType.Energy.value
+        self._attr_icon = NudgeIcons.Energy.value
         self._actual = 0.0
         self._user_entity_id = entity_id_user
         self._budget_entities = budget_entities
@@ -137,15 +157,14 @@ class Budget(SensorEntity):
 
         return attributes
 
-
     async def async_update(self) -> None:
         statistic_ids = self._budget_entities
         period = STATISTIC_PERIODS[self._budget_type]
-        start_time = self.get_start_time()
+        start_time = get_start_time(self._budget_type)
         end_time = None
         units = None
 
-        type: Final = "change"
+        type_statistic: Final = "change"
         stats = await get_instance(hass=self.hass).async_add_executor_job(
             statistics_during_period,
             self.hass,
@@ -154,12 +173,12 @@ class Budget(SensorEntity):
             statistic_ids,
             period,
             units,
-            {type},
+            {type_statistic},
         )
         sum_budget = 0.0
         for entity in stats.values():
             for stat in entity:
-                sum_value = stat.get(type)
+                sum_value = stat.get(type_statistic)
                 if sum_value is not None:
                     sum_budget += sum_value
         self._actual = sum_budget
@@ -178,5 +197,3 @@ class Budget(SensorEntity):
             service_data={"points": points},
             target={"entity_id": self._user_entity_id},
         )
-
-
