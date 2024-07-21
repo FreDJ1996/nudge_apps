@@ -1,8 +1,10 @@
 from datetime import datetime
+from html import entities
 from typing import Final
 
 from custom_components.nudgeplatform.const import NudgeType
-from .const import CONF_LAST_YEAR_CONSUMED, CONF_NUMBER_OF_PERSONS, DOMAIN
+from custom_components.powernudge.sensor import Nudge
+from .const import CONF_LAST_YEAR_CONSUMED, CONF_NUMBER_OF_PERSONS, DOMAIN,CONF_AUTARKY_GOAL,CONF_BUDGET_YEARLY_ELECTRICITY,CONF_BUDGET_YEARLY_HEAT,CONF_HEAT_OPTIONS,STEP_IDS
 import homeassistant.components.energy.data as energydata
 from homeassistant.util import dt as dt_util
 
@@ -41,33 +43,55 @@ async def async_setup_entry(
     yearly_goal = config_entry.data.get(CONF_LAST_YEAR_CONSUMED, 0)
     number_of_persons = config_entry.data.get(CONF_NUMBER_OF_PERSONS, {""})
 
-    device_info = DeviceInfo(
-        identifiers={(DOMAIN, entry_id)},
-        entry_type=DeviceEntryType.SERVICE,
-        name="Nudge Household",
-    )
-
-    autarky_entities = [
-        Autarky(
-            device_info=device_info,
-            nudge_period=NudgePeriod.Daily,
-            attr_name=f"{NudgePeriod.Daily}_{config_entry.title}",
-            entry_id=config_entry.entry_id
+    entities = []
+    autarky_goal = config_entry.data.get(CONF_AUTARKY_GOAL)
+    if(autarky_goal):
+        type = STEP_IDS[NudgeType.AUTARKY_GOAL]
+        device_info_autarky = DeviceInfo(
+            identifiers={(f"{DOMAIN}_{type}", entry_id)},
+            entry_type=DeviceEntryType.SERVICE,
+            name= f"Household {type}",
+            translation_key= f"household_{type}"
         )
-    ]
 
-    #    budget_goals = Budget.calculate_goals(yearly_goal=yearly_goal)
-    #    budgets = [
-    #        Budget(
-    #            entry_id=entry_id,
-    #            goal=budget_goals[budget_type],
-    #            budget_entities=budget_entities,
-    #            attr_name=f"{budget_type.name}_{config_entry.title}",
-    #            device_info=device_info,
-    #            budget_type=budget_type,
-    #        )
-    #        for budget_type in NudgePeriod
-    #    ]
+        autarky_entities = [
+            Autarky(
+                device_info=device_info_autarky,
+                nudge_period=nudge_period,
+                attr_name=f"{nudge_period.name}_{config_entry.title}",
+                entry_id=f"{config_entry.entry_id}_{type}",
+                goal=autarky_goal,
+            )
+            for nudge_period in NudgePeriod
+        ]
+
+        entities.append(autarky_entities)
+
+    electricity_budget_goal = config_entry.data.get(CONF_BUDGET_YEARLY_ELECTRICITY)
+    if electricity_budget_goal:
+        type = STEP_IDS[NudgeType.ELECTRICITY_BUDGET]
+        device_info_electricity = DeviceInfo(
+            identifiers={(f"{DOMAIN}_{type}", entry_id)},
+            entry_type=DeviceEntryType.SERVICE,
+            name=f"Household {type}",
+            translation_key=f"household_{type}",
+        )
+        budget_goals = Budget.calculate_goals(yearly_goal=electricity_budget_goal)
+        electricity_entities = [
+            Budget(
+                entry_id=f"{config_entry.entry_id}_{type}",
+                goal=budget_goals[nudge_period],
+                budget_entities=
+                device_info=device_info_autarky,
+                nudge_period=nudge_period,
+                attr_name=f"{nudge_period.name}_{config_entry.title}",
+
+
+            )
+            for nudge_period in NudgePeriod
+        ]
+
+        entities.append(autarky_entities)
 
     async_add_entities(autarky_entities)
 
@@ -80,11 +104,15 @@ class EnergyDevices(Enum):
     GridImport = auto()
 
 
+
+
+
+
 class Autarky(Goal):
     def __init__(
-        self, device_info: DeviceInfo, nudge_period: NudgePeriod, attr_name: str, entry_id: str
+        self, device_info: DeviceInfo, nudge_period: NudgePeriod, attr_name: str, entry_id: str, goal: float
     ) -> None:
-        super().__init__(device_info=device_info, nudge_period=nudge_period,attr_name=attr_name,entry_id=entry_id)
+        super().__init__(device_info=device_info, nudge_period=nudge_period,attr_name=attr_name,entry_id=entry_id,goal=goal)
         self._attr_native_value = 0.0
         self._attr_native_unit_of_measurement = "%"
         self._statistic_ids: list[str] = list()
@@ -151,7 +179,7 @@ class Autarky(Goal):
         )
 
         self.energy_values = {device: 0.0 for device in EnergyDevices}
-        
+
         for entity, values in stats.items():
             sum_entity = 0.0
             for stat in values:
@@ -172,7 +200,10 @@ class Autarky(Goal):
         total_consumption = (
             own_consumption + self.energy_values[EnergyDevices.GridImport]
         )
-        self._attr_native_value = (own_consumption/total_consumption)*100
+        if total_consumption == 0:
+            self._attr_native_value = 0
+        else:
+            self._attr_native_value = (own_consumption/total_consumption)*100
 
     async def async_added_to_hass(self) -> None:
         await self.get_energy_entities()

@@ -1,6 +1,6 @@
 {
-    "domain": "nudge_household_budget",
-    "name": "nudge household budget",
+    "domain": "nudge_household",
+    "name": "nudge household",
     "codeowners": [],
     "config_flow": true,
     "iot_class": "local_poll",

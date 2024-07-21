@@ -53,6 +53,7 @@ STATISTIC_PERIODS = {
 class NudgeIcons(Enum):
     Energy = "mdi:lightning-bolt"
 
+
 def get_start_time(nudge_period: NudgePeriod) -> datetime:
     now = dt_util.now()
     if nudge_period == NudgePeriod.Daily:
@@ -83,6 +84,7 @@ class Goal(SensorEntity):
         device_info: DeviceInfo,
         attr_name: str,
         nudge_period: NudgePeriod,
+        goal: float,
     ) -> None:
         super().__init__()
         self._attr_unique_id = f"{entry_id}_{nudge_period.name}"
@@ -91,6 +93,7 @@ class Goal(SensorEntity):
         self._nudge_period = nudge_period
         self._attr_name = attr_name
         self._attr_device_info = device_info
+        self._goal = goal
         self._last_update = datetime.now(tz=dt_util.DEFAULT_TIME_ZONE)
 
 
@@ -109,7 +112,6 @@ class Budget(SensorEntity):
 
         return goals
 
-
     def __init__(
         self,
         entry_id: str,
@@ -117,13 +119,13 @@ class Budget(SensorEntity):
         budget_entities: set[str],
         attr_name: str,
         device_info: DeviceInfo | None,
-        budget_type: NudgePeriod,
-        entity_id_user: str = "",
+        nudge_period: NudgePeriod,
+        entity_id_user: str|None = None,
         show_actual: bool = False,
     ) -> None:
         super().__init__()
-        self._attr_unique_id = f"{entry_id}_{budget_type.name}"
-        self._budget_type = budget_type
+        self._attr_unique_id = f"{entry_id}_{nudge_period.name}"
+        self._budget_type = nudge_period
         self._show_actual = show_actual
         self._attr_name = attr_name
         self._goal = goal
@@ -188,7 +190,7 @@ class Budget(SensorEntity):
 
     @callback
     async def send_points_to_user(self, now: datetime) -> None:
-        if self._user_entity_id == "":
+        if not self._user_entity_id:
             return
         points = -1 if self._actual > self._goal else 1
         await self.hass.services.async_call(

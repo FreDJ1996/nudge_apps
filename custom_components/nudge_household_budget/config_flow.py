@@ -20,23 +20,19 @@ from .const import (
     DOMAIN,
     CONF_BUDGET_YEARLY_ELECTRICITY,
     CONF_BUDGET_YEARLY_HEAT,
-    CONF_HOUSEHOLD_INFOS
+    NudgeType,
+    STEP_IDS
 )
 
-STEP_IDS = {
-    NudgeType.ELECTRICITY_BUDGET: "electricity",
-    NudgeType.AUTARKY_GOAL: "autarky",
-}
 
 DATA_SCHEMAS = {
     NudgeType.ELECTRICITY_BUDGET: vol.Schema(
         {
-            vol.Required(
-                CONF_BUDGET_YEARLY_ELECTRICITY
-            ): selector.NumberSelector(
+            vol.Required(CONF_BUDGET_YEARLY_ELECTRICITY): selector.NumberSelector(
                 selector.NumberSelectorConfig(
                     min=1000,
                     max=10000,
+                    step=100,
                     mode=selector.NumberSelectorMode.SLIDER,
                     unit_of_measurement="kWh",
                 )
@@ -45,12 +41,11 @@ DATA_SCHEMAS = {
     ),
     NudgeType.HEAT_BUDGET: vol.Schema(
         {
-            vol.Required(
-                CONF_BUDGET_YEARLY_HEAT
-            ): selector.NumberSelector(
+            vol.Required(CONF_BUDGET_YEARLY_HEAT): selector.NumberSelector(
                 selector.NumberSelectorConfig(
                     min=1000,
                     max=10000,
+                    step=100,
                     mode=selector.NumberSelectorMode.SLIDER,
                     unit_of_measurement="kWh",
                 )
@@ -65,6 +60,18 @@ DATA_SCHEMAS = {
                     max=100,
                     mode=selector.NumberSelectorMode.SLIDER,
                     unit_of_measurement="%",
+                )
+            )
+        }
+    ),
+    NudgeType.WATER_BUDGET: vol.Schema(
+        {
+            vol.Required(CONF_AUTARKY_GOAL): selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=1000,
+                    max=10000,
+                    mode=selector.NumberSelectorMode.SLIDER,
+                    unit_of_measurement="liter",
                 )
             )
         }
@@ -166,6 +173,25 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
+    async def async_step_heat(self, user_input=None):
+        errors = {}
+        if user_input is not None:
+            self.data.update(user_input)
+            for nudge_type, is_configured in self.nudge_support.items():
+                if is_configured:
+                    self.nudge_support[nudge_type] = False
+                    return self.async_show_form(
+                        step_id=STEP_IDS[nudge_type],
+                        data_schema=DATA_SCHEMAS[nudge_type],
+                    )
+            return self.async_create_entry(title=CONF_TITLE, data=self.data)
+
+        return self.async_show_form(
+            step_id=STEP_IDS[NudgeType.HEAT_BUDGET],
+            data_schema=DATA_SCHEMAS[NudgeType.HEAT_BUDGET],
+            errors=errors,
+        )
+
     async def async_step_autarky(self, user_input=None):
         errors = {}
         if user_input is not None:
@@ -182,5 +208,24 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id=STEP_IDS[NudgeType.AUTARKY_GOAL],
             data_schema=DATA_SCHEMAS[NudgeType.AUTARKY_GOAL],
+            errors=errors,
+        )
+
+    async def async_step_water(self, user_input=None):
+        errors = {}
+        if user_input is not None:
+            self.data.update(user_input)
+            for nudge_type, is_configured in self.nudge_support.items():
+                if is_configured:
+                    self.nudge_support[nudge_type] = False
+                    return self.async_show_form(
+                        step_id=STEP_IDS[nudge_type],
+                        data_schema=DATA_SCHEMAS[nudge_type],
+                    )
+            return self.async_create_entry(title=CONF_TITLE, data=self.data)
+
+        return self.async_show_form(
+            step_id=STEP_IDS[NudgeType.HEAT_BUDGET],
+            data_schema=DATA_SCHEMAS[NudgeType.HEAT_BUDGET],
             errors=errors,
         )

@@ -2,24 +2,58 @@
     "config": {
         "step": {
             "user": {
-                "title": "Budget erstellen",
-                "description": "Erstelle ein Budget für einen Energie Sensor",
+                "title": "Haushaltsinfos",
+                "description": "Gib hier Informationen über deinen Haushalt an",
                 "data": {
                     "number_persons":"Anzahl Personen",
+                    "heat_source": "Wärmequelle",
                     "last_year_consumed": "Letzter Verbrauch"
                 },
                 "data_description":
                 {
                     "number_persons": "Anzahl der Personen im Haushalt",
+                    "heat_source": "Art der Energiequelle für Wärme",
                     "last_year_consumed": "Verbrauch in kWh des letzten Jahres"
+                }
+            },
+            "electricity":
+            {
+                "title": "Budget Stromverbrauch",
+                "description": "Erstelle ein Budget für den gesamten Stromverbrauch deines Haushalts, nehme zum Beispiel den Verbrauch des letzten Jahres und reduziere ihn um 10%",
+                "data":{
+                    "budget_yearly_electricity": "Jährliches Strom Budget"
+                }
+            },
+            "autarky": {
+                "title": "Autarkie Ziel Haushalt",
+                "description": "Gib den Zielwert für Autarkie in Prozent für den Haushalt an",
+                "data": {
+                    "goal_autarky": "Autarkie Ziel"
+                }
+            },
+            "heat": {
+                "title": "Budget Wärmeverbrauch",
+                "description": "Erstelle ein Budget für den gesamten Wärmeverbrauch deines Haushalts",
+                "data": {
+                    "budget_yearly_heat": "Jährliches Wärme Budget"
+                }
+            },
+            "water": {
+                "title": "Budget Wassserverbrauch",
+                "description": "Erstelle ein Budget für den gesamten Wasserverbrauch deines Haushalts",
+                "data": {
+                    "budget_yearly_heat": "Jährliches Wasser Budget"
                 }
             }
         },
         "error": {
-            "energy_dashboard_not_configured": "The Energy Dashboard is not configured. Please enable it in Home Assistant settings before proceeding."
+            "energy_dashboard_not_configured": "Das Energie-Dashboard ist nicht konfiguriert. Bitte aktivieren Sie es in den Home Assistant-Einstellungen, bevor Sie fortfahren."
         }
         },
-        "abort": {
-            "already_configured": "Ein Benutzer mit diesem Namen existiert bereits"
+        "device":{
+            "household_autarky": {
+                "name":  "Haushalt Budget"
+            }
         }
+
     }

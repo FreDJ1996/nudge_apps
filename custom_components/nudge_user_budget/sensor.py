@@ -57,7 +57,7 @@ async def async_setup_entry(
             budget_entities=budget_entities,
             attr_name=f"{budget_type.name}_{config_entry.title}",
             device_info=device_info,
-            budget_type=budget_type,
+            nudge_period=budget_type,
         )
         for budget_type in NudgePeriod
     ]

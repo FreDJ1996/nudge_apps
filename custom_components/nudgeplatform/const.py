@@ -33,3 +33,4 @@ class NudgeType(Enum):
     AUTARKY_GOAL = auto()
     CO2_BUDGET = auto()
     MONEY_BUDGET = auto()
+
