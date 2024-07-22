@@ -52,7 +52,7 @@
         },
         "device":{
             "household_autarky": {
-                "name":  "Haushalt Budget"
+                "name":  "Haushalt Autarkie"
             }
         }
 

@@ -34,3 +34,12 @@ class NudgeType(Enum):
     CO2_BUDGET = auto()
     MONEY_BUDGET = auto()
 
+
+class EnergyElectricDevices(Enum):
+    BatteryExport = auto()
+    BatteryImport = auto()
+    SolarProduction = auto()
+    GridExport = auto()
+    GridImport = auto()
+
+    
