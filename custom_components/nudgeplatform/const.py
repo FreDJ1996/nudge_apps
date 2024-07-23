@@ -19,8 +19,23 @@ BADGES = [
     "Nachhaltigkeits-Champion",
 ]
 
-class NudgeIcons(Enum):
-    Energy = "mdi:lightning-bolt"
+
+class NudgeType(Enum):
+    ELECTRICITY_BUDGET = auto()
+    HEAT_BUDGET = auto()
+    WATER_BUDGET = auto()
+    AUTARKY_GOAL = auto()
+    CO2_BUDGET = auto()
+    MONEY_BUDGET = auto()
+
+NUDGE_ICONS = {
+    NudgeType.ELECTRICITY_BUDGET: "mdi:lightning-bolt",
+    NudgeType.HEAT_BUDGET: "mdi:lightning-bolt",
+    NudgeType.WATER_BUDGET: "mdi:lightning-bolt",
+    NudgeType.AUTARKY_GOAL: "mdi:lightning-bolt",
+    NudgeType.CO2_BUDGET: "mdi:lightning-bolt",
+    NudgeType.MONEY_BUDGET: "mdi:lightning-bolt",
+}
 
 
 class NudgePeriod(Enum):
@@ -30,13 +45,6 @@ class NudgePeriod(Enum):
     Yearly = auto()
 
 
-class NudgeType(Enum):
-    ELECTRICITY_BUDGET = auto()
-    HEAT_BUDGET = auto()
-    WATER_BUDGET = auto()
-    AUTARKY_GOAL = auto()
-    CO2_BUDGET = auto()
-    MONEY_BUDGET = auto()
 
 
 class EnergyElectricDevices(Enum):

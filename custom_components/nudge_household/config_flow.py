@@ -5,7 +5,7 @@ from homeassistant.components.energy import (
     is_configured as energy_dashboard_is_configured,
 )
 from homeassistant.helpers import selector
-
+import homeassistant.helpers.config_validation as cv
 from custom_components.nudgeplatform.const import (
     NudgeType,
 )
@@ -15,6 +15,7 @@ from .const import (
     CONF_HEAT_OPTIONS,
     CONF_HEAT_SOURCE,
     CONF_LAST_YEAR_CONSUMED,
+    CONF_NAME_HOUSEHOLD,
     CONF_NUMBER_OF_PERSONS,
     CONF_TITLE,
     DOMAIN,
@@ -80,6 +81,7 @@ DATA_SCHEMAS = {
 
 SCHMEMA_HOUSEHOLD_INFOS = vol.Schema(
     {
+        vol.Required(CONF_NAME_HOUSEHOLD): cv.string,
         vol.Required(CONF_NUMBER_OF_PERSONS): selector.NumberSelector(
             selector.NumberSelectorConfig(min=1, mode=selector.NumberSelectorMode.BOX)
         ),

@@ -9,7 +9,6 @@ homeassistant:
 logger:
   default: info
 
-
 demo:
 
 resources:
@@ -19,12 +18,3 @@ resources:
     type: module
   - url: /hacsfiles/bar-card/bar-card.js
     type: module
-
-sensor:
-  - platform: rest
-    name: BUND Scoreboard2
-    resource: https://site.web.api.espn.com/apis/v2/sports/soccer/ger.1/standings
-    value_template: "{{ now() }}"
-    json_attributes_path: "$['children'][0]['standings']"
-    json_attributes:
-      - entries

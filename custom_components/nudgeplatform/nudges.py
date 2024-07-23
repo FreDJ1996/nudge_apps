@@ -1,6 +1,5 @@
 import logging
 from datetime import datetime, timedelta
-from enum import Enum
 from typing import Final
 
 import homeassistant.components.energy.data as energydata
@@ -19,10 +18,11 @@ from homeassistant.util import dt as dt_util
 
 from .const import (
     DOMAIN,
-    EnergyElectricDevices,
-    NudgePeriod,
     SERVICE_ADD_POINTS_TO_USER,
-    NudgeIcons,
+    EnergyElectricDevices,
+    NUDGE_ICONS,
+    NudgePeriod,
+    NudgeType,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -178,16 +178,17 @@ class Nudge(SensorEntity):
         attr_name: str,
         nudge_period: NudgePeriod,
         goal: float,
+        score_entity: str|None,
     ) -> None:
         super().__init__()
         self._attr_unique_id = f"{entry_id}_{nudge_period.name}"
-        self._attr_native_value = 0
-        self._attr_native_unit_of_measurement = "%"
         self._nudge_period = nudge_period
         self._attr_name = attr_name
         self._attr_device_info = device_info
         self._goal = goal
         self._last_update = datetime.now(tz=dt_util.DEFAULT_TIME_ZONE)
+        self._score_entity = score_entity
+        self._goal_reached = False
 
     async def async_added_to_hass(self) -> None:
         # Jeden Abend die Punkte aktualisieren
@@ -197,22 +198,20 @@ class Nudge(SensorEntity):
 
     @callback
     async def send_points_to_user(self, now: datetime) -> None:
-        if not self._user_entity_id:
+        if not self._score_entity:
             return
-        points = 1 if self._actual < self._goal else 0
+        points = 1 if self._goal_reached else 0
         if points != 0:
             await self.hass.services.async_call(
                 domain=DOMAIN,
                 service=SERVICE_ADD_POINTS_TO_USER,
                 service_data={"points": points},
-                target={"entity_id": self._user_entity_id},
+                target={"entity_id": self._score_entity},
             )
 
-class Budget(SensorEntity):
-    """Nudget For Person"""
 
-    _attr_state_class = SensorStateClass.MEASUREMENT
-    _attr_should_poll = True
+class Budget(Nudge):
+    """Nudget For Person"""
 
     @staticmethod
     def calculate_goals(yearly_goal: float) -> dict[NudgePeriod, float]:
@@ -220,7 +219,6 @@ class Budget(SensorEntity):
         goals[NudgePeriod.Daily] = yearly_goal / 365
         goals[NudgePeriod.Weekly] = goals[NudgePeriod.Daily] * 7
         goals[NudgePeriod.Monthly] = goals[NudgePeriod.Yearly] / 12
-
         return goals
 
     def __init__(
@@ -228,34 +226,30 @@ class Budget(SensorEntity):
         entry_id: str,
         goal: float,
         attr_name: str,
-        device_info: DeviceInfo | None,
+        device_info: DeviceInfo,
         nudge_period: NudgePeriod,
+        nudge_type: NudgeType,
+        score_entity: str|None,
         energy_entities: dict[EnergyElectricDevices, str] | None = None,
         budget_entities: set[str] | None = None,
-        entity_id_score: str | None = None,
         show_actual: bool = False,
     ) -> None:
-        super().__init__()
+        super().__init__(
+            entry_id=entry_id,
+            device_info=device_info,
+            attr_name=attr_name,
+            nudge_period=nudge_period,
+            goal=goal,
+            score_entity=score_entity,
+        )
         self._attr_unique_id = f"{entry_id}_{nudge_period.name}"
-        self._budget_type = nudge_period
         self._show_actual = show_actual
-        self._attr_name = attr_name
-        self._goal = goal
-        self._attr_icon = NudgeIcons.Energy.value
+        self._attr_icon = NUDGE_ICONS[nudge_type]
         self._actual = 0.0
-        self._score_entity_id = entity_id_score
         self._budget_entities = budget_entities
         self._energy_entities = energy_entities
         self._attr_native_value: int = 0
         self._attr_native_unit_of_measurement = "%"
-        self._attr_device_info = device_info
-        self._last_update = datetime.now(tz=dt_util.DEFAULT_TIME_ZONE)
-
-    async def async_added_to_hass(self) -> None:
-        # Jeden Abend die Punkte aktualisieren
-        async_track_time_change(
-            self.hass, self.send_points_to_user, hour=23, minute=59, second=59
-        )
 
     @property
     def extra_state_attributes(self) -> dict:
@@ -276,32 +270,20 @@ class Budget(SensorEntity):
         sum_budget = 0.0
         if self._budget_entities:
             stats = await get_long_term_statistics(
-                self._budget_entities, self._budget_type, self.hass
+                self._budget_entities, self._nudge_period, self.hass
             )
             for value in stats.values():
                 sum_budget += value
         elif self._energy_entities:
             own_consumtion, total_consumtion = await get_own_total_consumtion(
                 energy_entities=self._energy_entities,
-                period=self._budget_type,
+                period=self._nudge_period,
                 hass=self.hass,
             )
             sum_budget = own_consumtion
 
         self._actual = sum_budget
+        self._goal_reached = self._actual < self._goal
         self._attr_native_value = round(self._actual / self._goal * 100)
         self._last_update = datetime.now(tz=dt_util.DEFAULT_TIME_ZONE)
         self.async_write_ha_state()
-
-    @callback
-    async def send_points_to_user(self, now: datetime) -> None:
-        if not self._score_entity_id:
-            return
-        points = 1 if self._actual < self._goal else 0
-        if points != 0:
-            await self.hass.services.async_call(
-                domain=DOMAIN,
-                service=SERVICE_ADD_POINTS_TO_USER,
-                service_data={"points": points},
-                target={"entity_id": self._score_entity_id},
-            )

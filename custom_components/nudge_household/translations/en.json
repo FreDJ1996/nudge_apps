@@ -5,6 +5,7 @@
                 "title": "Haushaltsinfos",
                 "description": "Gib hier Informationen über deinen Haushalt an",
                 "data": {
+                    "name_household": "Name Haushalt",
                     "number_persons":"Anzahl Personen",
                     "heat_source": "Wärmequelle",
                     "last_year_consumed": "Letzter Verbrauch"

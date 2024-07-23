@@ -1,18 +1,21 @@
-from custom_components.nudgeplatform.nudges import Budget, NudgePeriod
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers import (
+    device_registry as dr,
+)
+from homeassistant.helpers import (
+    entity_registry as er,
+)
+from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
 from custom_components.nudgeplatform.const import (
     CONF_BUDGET_YEARLY,
     CONF_NUDGE_PERSON,
     CONF_TRACKED_SENSOR_ENTITIES,
+    NudgeType,
 )
-from homeassistant.core import HomeAssistant
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers import (
-    device_registry as dr,
-    entity_platform,
-    entity_registry as er,
-)
-from homeassistant.helpers.device_registry import DeviceInfo
+from custom_components.nudgeplatform.nudges import Budget, NudgePeriod
 
 
 async def async_setup_entry(
@@ -45,19 +48,19 @@ async def async_setup_entry(
         )
     ):
         device_info = DeviceInfo(identifiers=device.identifiers)
-    else:
-        device_info = None
+
 
     budget_goals = Budget.calculate_goals(yearly_goal=yearly_goal)
     entities = [
         Budget(
             entry_id=entry_id,
             goal=budget_goals[budget_type],
-            entity_id_score=entity_id_user,
+            score_entity=entity_id_user,
             budget_entities=budget_entities,
             attr_name=f"{budget_type.name}_{config_entry.title}",
             device_info=device_info,
             nudge_period=budget_type,
+            nudge_type=NudgeType.ELECTRICITY_BUDGET
         )
         for budget_type in NudgePeriod
     ]

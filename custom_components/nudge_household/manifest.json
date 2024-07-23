@@ -11,6 +11,8 @@
         "nudgeplatform"
     ],
     "platforms": [
-        "sensor"
-    ]
+        "sensor",
+        "number"
+    ],
+    "integration_type": "hub"
 }

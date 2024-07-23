@@ -11,5 +11,6 @@
     ],
     "platforms": [
         "sensor"
-    ]
+    ],
+    "integration_type": "service"
 }
