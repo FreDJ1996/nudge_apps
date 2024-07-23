@@ -15,6 +15,7 @@ from .const import (
     CONF_NUDGE_PERSON,
     DOMAIN,
     SERVICE_SET_RANK_FOR_USER,
+    SERVICE_ADD_POINTS_TO_USER
 )
 
 @callback
@@ -44,6 +45,13 @@ async def async_setup_entry(
         },
         "set_ranking_position",
     )
+    platform.async_register_entity_service(
+        SERVICE_ADD_POINTS_TO_USER,
+        {
+            vol.Required("points"): cv.positive_int,
+        },
+        SERVICE_ADD_POINTS_TO_USER,
+    )
 
     async_add_entities(entities)
 
@@ -64,9 +72,13 @@ class User(RestoreNumber):
             name=username,
         )
         self.ranking_position = "0/0"
+        self._attr_native_value: int = 0
 
     async def set_ranking_position(self, ranking_position: int, ranking_length: int) -> None:
         self.ranking_position = f"{ranking_position}/{ranking_length}"
+
+    async def add_points_to_user(self, points: int) -> None:
+        self._attr_native_value += points
 
     @property
     def extra_state_attributes(self) -> dict:
@@ -77,7 +89,10 @@ class User(RestoreNumber):
         """Restore last state."""
         await super().async_added_to_hass()
         last_number_data = await self.async_get_last_number_data()
-        self._attr_native_value = last_number_data.native_value if last_number_data is not None else 0
+        if(last_number_data and last_number_data.native_value):
+            self._attr_native_value = int(last_number_data.native_value)
+        else:
+            self._attr_native_value = 0
 
     async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""

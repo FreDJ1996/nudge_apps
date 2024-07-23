@@ -53,7 +53,7 @@ async def async_setup_entry(
         Budget(
             entry_id=entry_id,
             goal=budget_goals[budget_type],
-            entity_id_user=entity_id_user,
+            entity_id_score=entity_id_user,
             budget_entities=budget_entities,
             attr_name=f"{budget_type.name}_{config_entry.title}",
             device_info=device_info,

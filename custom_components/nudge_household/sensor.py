@@ -5,6 +5,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
+from google.cloud import firestore
+
 
 from custom_components.nudgeplatform.const import EnergyElectricDevices, NudgeType
 from custom_components.nudgeplatform.nudges import (
@@ -62,6 +64,8 @@ class Autarky(Goal):
         self._last_update = datetime.now(tz=dt_util.DEFAULT_TIME_ZONE)
         self._attr_native_value = await self.get_autarky()
         self.async_write_ha_state()
+
+db = firestore.Client(project="HomeAssistantHouseholdNudge")
 
 
 async def async_setup_entry(
