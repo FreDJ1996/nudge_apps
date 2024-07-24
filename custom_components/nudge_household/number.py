@@ -91,6 +91,8 @@ async def async_setup_entry(
 
         # register_services()
 
+    config_entry.runtime_data.score_device_unique_ids = score_device_unique_ids
+
     async_add_entities(entities)
 
 
@@ -103,5 +105,5 @@ class HousholdScore(Score):
         device_info: DeviceInfo | None = None,
     ) -> None:
         super().__init__(nudge_type=nudge_type, device_info=device_info)
-        self._attr_name = f"household_{nudge_type.name}_{name}"
+        self._attr_name = f"{nudge_type.name}_{name}"
         self._attr_unique_id = f"{entry_id}_household_{nudge_type.name}"

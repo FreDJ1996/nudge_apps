@@ -87,11 +87,12 @@ async def async_setup_entry(
     score_device_unique_ids = config_entry.runtime_data.score_device_unique_ids
     nudge_type_score_entity_ids: dict[NudgeType,str|None] = {}
     for nudge_type,unique_id in score_device_unique_ids.items():
-        nudge_type_score_entity_ids[nudge_type] = er.async_get_entity_id(
-            DOMAIN,
-            Platform.NUMBER,
-            unique_id=unique_id
-        )
+        if unique_id:
+            nudge_type_score_entity_ids[nudge_type] = er.async_get_entity_id(
+                DOMAIN,
+                Platform.NUMBER,
+                unique_id=unique_id
+            )
 
     autarky_goal = config_entry.data.get(CONF_AUTARKY_GOAL)
     if autarky_goal:

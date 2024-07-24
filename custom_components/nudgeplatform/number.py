@@ -126,5 +126,5 @@ class User(Score):
             nudge_type=nudge_type,
             device_info=device_info,
         )
-        self._attr_name = f"user_{nudge_type.name}_{name}"
-        self._attr_unique_id = f"{entry_id}_User"
+        self._attr_name = f"user_{name}"
+        self._attr_unique_id = entry_id

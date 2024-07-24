@@ -20,12 +20,11 @@ PLATFORMS: list[Platform] = [
     Platform.NUMBER,Platform.SENSOR]
 
 
-
-
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: MyConfigEntry,
 ) -> bool:
 
+    entry.runtime_data = MyData(score_device_unique_ids={})
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
