@@ -179,6 +179,8 @@ class Nudge(SensorEntity):
         nudge_period: NudgePeriod,
         goal: float,
         score_entity: str|None,
+        nudge_type: NudgeType,
+        domain:str
     ) -> None:
         super().__init__()
         self._attr_unique_id = f"{entry_id}_{nudge_period.name}"
@@ -189,12 +191,15 @@ class Nudge(SensorEntity):
         self._last_update = datetime.now(tz=dt_util.DEFAULT_TIME_ZONE)
         self._score_entity = score_entity
         self._goal_reached = False
+        self._attr_icon = NUDGE_ICONS[nudge_type]
+        self._domain = domain
 
     async def async_added_to_hass(self) -> None:
         # Jeden Abend die Punkte aktualisieren
-        async_track_time_change(
-            self.hass, self.send_points_to_user, hour=23, minute=59, second=59
-        )
+        if self._nudge_period == NudgePeriod.Daily:
+            async_track_time_change(
+                self.hass, self.send_points_to_user, second=59
+            )
 
     @callback
     async def send_points_to_user(self, now: datetime) -> None:
@@ -203,7 +208,7 @@ class Nudge(SensorEntity):
         points = 1 if self._goal_reached else 0
         if points != 0:
             await self.hass.services.async_call(
-                domain=DOMAIN,
+                domain=self._domain,
                 service=SERVICE_ADD_POINTS_TO_USER,
                 service_data={"points": points},
                 target={"entity_id": self._score_entity},
@@ -229,10 +234,11 @@ class Budget(Nudge):
         device_info: DeviceInfo,
         nudge_period: NudgePeriod,
         nudge_type: NudgeType,
+        domain:str,
         score_entity: str|None,
         energy_entities: dict[EnergyElectricDevices, str] | None = None,
         budget_entities: set[str] | None = None,
-        show_actual: bool = False,
+        show_actual: bool = False
     ) -> None:
         super().__init__(
             entry_id=entry_id,
@@ -241,10 +247,11 @@ class Budget(Nudge):
             nudge_period=nudge_period,
             goal=goal,
             score_entity=score_entity,
+            nudge_type=nudge_type,
+            domain=domain
         )
         self._attr_unique_id = f"{entry_id}_{nudge_period.name}"
         self._show_actual = show_actual
-        self._attr_icon = NUDGE_ICONS[nudge_type]
         self._actual = 0.0
         self._budget_entities = budget_entities
         self._energy_entities = energy_entities

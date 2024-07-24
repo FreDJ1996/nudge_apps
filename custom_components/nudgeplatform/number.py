@@ -108,11 +108,11 @@ class Score(RestoreNumber):
         else:
             self._attr_native_value = 0
 
-    async def async_set_native_value(self, value: float) -> None:
-        """Update the current value."""
-        if value.is_integer():
-            self._attr_native_value = int(value)
-            self.async_write_ha_state()
+    #async def async_set_native_value(self, value: float) -> None:
+    #    """Update the current value."""
+    #    if value.is_integer():
+    #        self._attr_native_value = int(value)
+    #        self.async_write_ha_state()
 
 class User(Score):
     def __init__(

@@ -14,6 +14,7 @@ from custom_components.nudgeplatform.const import (
     CONF_NUDGE_PERSON,
     CONF_TRACKED_SENSOR_ENTITIES,
     NudgeType,
+    DOMAIN as NUDGE_PLATFORM_DOMAIN
 )
 from custom_components.nudgeplatform.nudges import Budget, NudgePeriod
 
@@ -60,7 +61,8 @@ async def async_setup_entry(
             attr_name=f"{budget_type.name}_{config_entry.title}",
             device_info=device_info,
             nudge_period=budget_type,
-            nudge_type=NudgeType.ELECTRICITY_BUDGET
+            nudge_type=NudgeType.ELECTRICITY_BUDGET,
+            domain=NUDGE_PLATFORM_DOMAIN
         )
         for budget_type in NudgePeriod
     ]

@@ -1,4 +1,5 @@
 from datetime import datetime
+from xml import dom
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -40,7 +41,8 @@ class Autarky(Nudge):
         entry_id: str,
         goal: float,
         energy_entities: dict[EnergyElectricDevices, str],
-        score_entity: str|None,
+        score_entity: str | None,
+        domain: str,
     ) -> None:
         super().__init__(
             device_info=device_info,
@@ -49,6 +51,8 @@ class Autarky(Nudge):
             entry_id=entry_id,
             goal=goal,
             score_entity=score_entity,
+            nudge_type=NudgeType.AUTARKY_GOAL,
+            domain=domain
         )
         self._attr_native_value = 0.0
         self._attr_native_unit_of_measurement = "%"
@@ -89,8 +93,8 @@ async def async_setup_entry(
     for nudge_type,unique_id in score_device_unique_ids.items():
         if unique_id:
             nudge_type_score_entity_ids[nudge_type] = er.async_get_entity_id(
-                DOMAIN,
-                Platform.NUMBER,
+                platform=DOMAIN,
+                domain=Platform.NUMBER,
                 unique_id=unique_id
             )
 
@@ -169,6 +173,7 @@ def create_budget_device(
             budget_entities=budget_entities,
             score_entity=score_entity,
             nudge_type=nudge_type,
+            domain=DOMAIN
         )
         for nudge_period in NudgePeriod
     ]
@@ -197,6 +202,7 @@ def create_autarky_device(
             goal=autarky_goal,
             energy_entities=energy_entities,
             score_entity=score_entity,
+            domain=DOMAIN
         )
         for nudge_period in NudgePeriod
     ]

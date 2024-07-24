@@ -89,7 +89,7 @@ async def async_setup_entry(
         score_device_unique_ids[nudge_type] = entity.get_unique_id()
         entities.append(entity)
 
-        # register_services()
+    register_services()
 
     config_entry.runtime_data.score_device_unique_ids = score_device_unique_ids
 
