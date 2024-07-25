@@ -25,8 +25,10 @@ class NudgeType(Enum):
     HEAT_BUDGET = auto()
     WATER_BUDGET = auto()
     AUTARKY_GOAL = auto()
+    E_MOBILITY_Budget = auto()
     CO2_BUDGET = auto()
     MONEY_BUDGET = auto()
+
 
 NUDGE_ICONS = {
     NudgeType.ELECTRICITY_BUDGET: "mdi:lightning-bolt",
@@ -45,13 +47,11 @@ class NudgePeriod(Enum):
     Yearly = auto()
 
 
-
-
 class EnergyElectricDevices(Enum):
-    BatteryExport = auto()
+    BATTERY_EXPORT = auto()
     BatteryImport = auto()
     SolarProduction = auto()
     GridExport = auto()
     GridImport = auto()
-
-
+    HeatPump = auto()
+    ECharger = auto()

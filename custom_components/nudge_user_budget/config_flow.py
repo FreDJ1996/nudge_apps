@@ -54,7 +54,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors = {}
         if user_input is not None:
             name_of_person = str(user_input[CONF_NUDGE_PERSON])
-            name_of_person = name_of_person.rsplit(".", 1)[1].capitalize()
+            name_of_person = name_of_person.rsplit("_", 1)[1].capitalize()
             title = "Budget_" + str(name_of_person)
 
             return self.async_create_entry(

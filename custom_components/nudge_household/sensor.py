@@ -16,7 +16,7 @@ from custom_components.nudgeplatform.nudges import (
     get_own_total_consumtion,
 )
 from custom_components.nudgeplatform.number import Score
-from homeassistant.helpers import  entity_registry,device_registry
+from homeassistant.helpers import entity_registry, device_registry
 from homeassistant.const import Platform
 
 from .const import (
@@ -24,11 +24,11 @@ from .const import (
     CONF_BUDGET_YEARLY_ELECTRICITY,
     CONF_BUDGET_YEARLY_HEAT,
     CONF_LAST_YEAR_CONSUMED,
-    CONF_NUMBER_OF_PERSONS,
+    CONF_SIZE_HOUSEHOLD,
     DOMAIN,
     STEP_IDS,
     CONF_NAME_HOUSEHOLD,
-    MyConfigEntry
+    MyConfigEntry,
 )
 
 
@@ -52,7 +52,7 @@ class Autarky(Nudge):
             goal=goal,
             score_entity=score_entity,
             nudge_type=NudgeType.AUTARKY_GOAL,
-            domain=domain
+            domain=domain,
         )
         self._attr_native_value = 0.0
         self._attr_native_unit_of_measurement = "%"
@@ -82,26 +82,29 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     yearly_goal = config_entry.data.get(CONF_LAST_YEAR_CONSUMED, 0)
-    number_of_persons = config_entry.data.get(CONF_NUMBER_OF_PERSONS, {""})
+    number_of_persons = config_entry.data.get(CONF_SIZE_HOUSEHOLD, {""})
     name_household = config_entry.data.get(CONF_NAME_HOUSEHOLD, "")
     energy_entities, gas, water = await get_energy_entities(hass=hass)
 
     entities = []
     er = entity_registry.async_get(hass)
     score_device_unique_ids = config_entry.runtime_data.score_device_unique_ids
-    nudge_type_score_entity_ids: dict[NudgeType,str|None] = {}
-    for nudge_type,unique_id in score_device_unique_ids.items():
+    nudge_type_score_entity_ids: dict[NudgeType, str | None] = {}
+    for nudge_type, unique_id in score_device_unique_ids.items():
         if unique_id:
             nudge_type_score_entity_ids[nudge_type] = er.async_get_entity_id(
-                platform=DOMAIN,
-                domain=Platform.NUMBER,
-                unique_id=unique_id
+                platform=DOMAIN, domain=Platform.NUMBER, unique_id=unique_id
             )
 
     autarky_goal = config_entry.data.get(CONF_AUTARKY_GOAL)
     if autarky_goal:
         entities.extend(
-            create_autarky_device(config_entry, energy_entities, autarky_goal,score_entity=nudge_type_score_entity_ids[NudgeType.AUTARKY_GOAL])
+            create_autarky_device(
+                config_entry,
+                energy_entities,
+                autarky_goal,
+                score_entity=nudge_type_score_entity_ids[NudgeType.AUTARKY_GOAL],
+            )
         )
 
     electricity_budget_goal = config_entry.data.get(CONF_BUDGET_YEARLY_ELECTRICITY)
@@ -113,7 +116,8 @@ async def async_setup_entry(
                 config_entry=config_entry,
                 nudge_type=nudge_type,
                 energy_entities=energy_entities,
-                budget_yearly_goal=electricity_budget_goal,score_entity=nudge_type_score_entity_ids[nudge_type]
+                budget_yearly_goal=electricity_budget_goal,
+                score_entity=nudge_type_score_entity_ids[nudge_type],
             )
         )
 
@@ -149,7 +153,7 @@ def create_budget_device(
     config_entry: ConfigEntry,
     nudge_type: NudgeType,
     budget_yearly_goal: float,
-    score_entity:str|None,
+    score_entity: str | None,
     energy_entities: dict[EnergyElectricDevices, str] | None = None,
     budget_entities: set[str] | None = None,
 ) -> list[Budget]:
@@ -173,7 +177,7 @@ def create_budget_device(
             budget_entities=budget_entities,
             score_entity=score_entity,
             nudge_type=nudge_type,
-            domain=DOMAIN
+            domain=DOMAIN,
         )
         for nudge_period in NudgePeriod
     ]
@@ -181,10 +185,10 @@ def create_budget_device(
 
 
 def create_autarky_device(
-    config_entry:ConfigEntry,
+    config_entry: ConfigEntry,
     energy_entities: dict[EnergyElectricDevices, str],
-    autarky_goal:int,
-    score_entity: str|None,
+    autarky_goal: int,
+    score_entity: str | None,
 ) -> list[Autarky]:
     nudge_medium_type = STEP_IDS[NudgeType.AUTARKY_GOAL]
     device_info_autarky = DeviceInfo(
@@ -202,7 +206,7 @@ def create_autarky_device(
             goal=autarky_goal,
             energy_entities=energy_entities,
             score_entity=score_entity,
-            domain=DOMAIN
+            domain=DOMAIN,
         )
         for nudge_period in NudgePeriod
     ]

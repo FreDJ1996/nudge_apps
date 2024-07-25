@@ -8,13 +8,18 @@
                     "name_household": "Name Haushalt",
                     "number_persons":"Anzahl Personen",
                     "heat_source": "Wärmequelle",
-                    "last_year_consumed": "Letzter Verbrauch"
+                    "e_charger": "Wallbox E-Auto",
+                    "final_energy_consumption": "Endenergiebedarf",
+                    "apartment_size": "Quadratmeter Wohnung"
                 },
                 "data_description":
                 {
                     "number_persons": "Anzahl der Personen im Haushalt",
                     "heat_source": "Art der Energiequelle für Wärme",
-                    "last_year_consumed": "Verbrauch in kWh des letzten Jahres"
+                    "e_charger": "Energiesensor für die E-Auto Wallbox",
+                    "final_energy_consumption": "Endenergiebedarf aus dem Energieausweis",
+                    "apartment_size": "Gesamtanzahl beheizte Quadratmeter der Wohnung"
+
                 }
             },
             "electricity":

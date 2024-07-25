@@ -1,3 +1,4 @@
+from numbers import Number
 from homeassistant.components.number import RestoreNumber, NumberMode
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
@@ -126,5 +127,22 @@ class User(Score):
             nudge_type=nudge_type,
             device_info=device_info,
         )
-        self._attr_name = f"user_{name}"
+        self._attr_name = "score"
         self._attr_unique_id = entry_id
+
+class TotalScore(Number):
+    _attr_has_entity_name = True
+    _attr_name = None
+    _attr_mode = NumberMode.BOX
+    _attr_native_unit_of_measurement = "points"
+
+    def __init__(
+        self,
+        nudge_type: NudgeType,
+        device_info: DeviceInfo | None = None,
+    ) -> None:
+        super().__init__()
+        self._attr_device_info = device_info
+        self.ranking_position = "0/0"
+        self._attr_native_value: int = 0
+        self._nudge_type = nudge_type

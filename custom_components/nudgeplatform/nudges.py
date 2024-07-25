@@ -75,7 +75,7 @@ async def get_energy_entities(
                         "stat_energy_to"
                     ]
             elif source["type"] == "battery":
-                energy_entities[EnergyElectricDevices.BatteryExport] = source.get(
+                energy_entities[EnergyElectricDevices.BATTERY_EXPORT] = source.get(
                     "stat_energy_to"
                 )
                 energy_entities[EnergyElectricDevices.BatteryImport] = source.get(
@@ -156,7 +156,7 @@ async def get_own_total_consumtion(
     # Eigenverbrauch =  Batterie Export-Batterie Import + Solar Produktion - Strom Export
     # Gesamtverbrauch = Eigenverbrauch + Strom Import
     own_consumption = (
-        energy_values[EnergyElectricDevices.BatteryExport]
+        energy_values[EnergyElectricDevices.BATTERY_EXPORT]
         - energy_values[EnergyElectricDevices.BatteryImport]
         + energy_values[EnergyElectricDevices.SolarProduction]
         - energy_values[EnergyElectricDevices.GridExport]
@@ -178,9 +178,9 @@ class Nudge(SensorEntity):
         attr_name: str,
         nudge_period: NudgePeriod,
         goal: float,
-        score_entity: str|None,
+        score_entity: str | None,
         nudge_type: NudgeType,
-        domain:str
+        domain: str,
     ) -> None:
         super().__init__()
         self._attr_unique_id = f"{entry_id}_{nudge_period.name}"
@@ -197,9 +197,7 @@ class Nudge(SensorEntity):
     async def async_added_to_hass(self) -> None:
         # Jeden Abend die Punkte aktualisieren
         if self._nudge_period == NudgePeriod.Daily:
-            async_track_time_change(
-                self.hass, self.send_points_to_user, second=59
-            )
+            async_track_time_change(self.hass, self.send_points_to_user, second=59)
 
     @callback
     async def send_points_to_user(self, now: datetime) -> None:
@@ -234,11 +232,11 @@ class Budget(Nudge):
         device_info: DeviceInfo,
         nudge_period: NudgePeriod,
         nudge_type: NudgeType,
-        domain:str,
-        score_entity: str|None,
+        domain: str,
+        score_entity: str | None,
         energy_entities: dict[EnergyElectricDevices, str] | None = None,
         budget_entities: set[str] | None = None,
-        show_actual: bool = False
+        show_actual: bool = False,
     ) -> None:
         super().__init__(
             entry_id=entry_id,
@@ -248,7 +246,7 @@ class Budget(Nudge):
             goal=goal,
             score_entity=score_entity,
             nudge_type=nudge_type,
-            domain=domain
+            domain=domain,
         )
         self._attr_unique_id = f"{entry_id}_{nudge_period.name}"
         self._show_actual = show_actual

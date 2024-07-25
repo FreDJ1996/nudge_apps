@@ -58,7 +58,7 @@ async def async_setup_entry(
             goal=budget_goals[budget_type],
             score_entity=entity_id_user,
             budget_entities=budget_entities,
-            attr_name=f"{budget_type.name}_{config_entry.title}",
+            attr_name=budget_type.name,
             device_info=device_info,
             nudge_period=budget_type,
             nudge_type=NudgeType.ELECTRICITY_BUDGET,

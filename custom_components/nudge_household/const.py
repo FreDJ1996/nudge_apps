@@ -1,9 +1,15 @@
 """Constants."""
-from  custom_components.nudgeplatform.const import NudgeType
+
+from custom_components.nudgeplatform.const import NudgeType
 from homeassistant.config_entries import ConfigEntry
 from dataclasses import dataclass
+
 DOMAIN = "nudge_household"
-CONF_NUMBER_OF_PERSONS = "number_persons"
+CONF_SIZE_HOUSEHOLD = "number_persons"
+CONF_ENERGIE_EFFICIENCY = "final_energy_consumption"
+CONF_APARTMENT_SIZE = "apartment_size"
+CONF_E_Charger = "e_charger"
+CONF_HEAT_PUMP = "heat_pump"
 CONF_LAST_YEAR_CONSUMED = "last_year_consumed"
 CONF_HEAT_SOURCE = "heat_source"
 CONF_TITLE = "Nudge Household"
@@ -33,4 +39,4 @@ type MyConfigEntry = ConfigEntry[MyData]
 
 @dataclass
 class MyData:
-    score_device_unique_ids: dict[NudgeType, str|None]
+    score_device_unique_ids: dict[NudgeType, str | None]
