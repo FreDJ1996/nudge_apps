@@ -39,4 +39,4 @@ type MyConfigEntry = ConfigEntry[MyData]
 
 @dataclass
 class MyData:
-    score_device_unique_ids: dict[NudgeType, str | None]
+    score_device_unique_ids: dict[NudgeType, str]

@@ -1,13 +1,21 @@
-from numbers import Number
-from homeassistant.components.number import RestoreNumber, NumberMode
+from homeassistant.components.number import RestoreNumber, NumberMode, NumberEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
+from homeassistant.helpers.device_registry import (
+    DeviceEntryType,
+    DeviceInfo,
+    async_get as async_get_device_registry,
+)
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.const import EntityCategory
 from homeassistant.helpers import entity_platform
 from homeassistant.helpers import config_validation as cv
 import voluptuous as vol
+from homeassistant.helpers.entity_registry import (
+    EntityRegistry,
+    async_get as async_get_entity_registry,
+)
+from homeassistant.const import Platform
 
 from .const import (
     CONF_NUDGE_PERSON,
@@ -55,11 +63,10 @@ async def async_setup_entry(
     )
 
     entities.append(
-        User(
+        Score(
             entry_id=config_entry.entry_id,
             device_info=device_info,
             nudge_type=NudgeType.ELECTRICITY_BUDGET,
-            name=name,
         )
     )
     register_services()
@@ -77,13 +84,16 @@ class Score(RestoreNumber):
     def __init__(
         self,
         nudge_type: NudgeType,
+        entry_id: str,
         device_info: DeviceInfo | None = None,
     ) -> None:
         super().__init__()
         self._attr_device_info = device_info
         self.ranking_position = "0/0"
         self._attr_native_value: int = 0
-        self._nudge_type = nudge_type
+        self.nudge_type = nudge_type
+        self._attr_name = f"Score {nudge_type.name.replace("_"," ").capitalize()}"
+        self._attr_unique_id: str = f"{entry_id}_{nudge_type.name}"
 
     async def set_ranking_position(
         self, ranking_position: int, ranking_length: int
@@ -93,7 +103,7 @@ class Score(RestoreNumber):
     async def add_points_to_user(self, points: int) -> None:
         self._attr_native_value += points
 
-    def get_unique_id(self)-> str|None:
+    def get_unique_id(self) -> str:
         return self._attr_unique_id
 
     @property
@@ -109,28 +119,14 @@ class Score(RestoreNumber):
         else:
             self._attr_native_value = 0
 
-    #async def async_set_native_value(self, value: float) -> None:
-    #    """Update the current value."""
-    #    if value.is_integer():
-    #        self._attr_native_value = int(value)
-    #        self.async_write_ha_state()
+    async def async_set_native_value(self, value: float) -> None:
+       """Update the current value."""
+       if value.is_integer():
+           self._attr_native_value = int(value)
+           self.async_write_ha_state()
 
-class User(Score):
-    def __init__(
-        self,
-        entry_id: str,
-        nudge_type: NudgeType,
-        name: str,
-        device_info: DeviceInfo | None = None,
-    ) -> None:
-        super().__init__(
-            nudge_type=nudge_type,
-            device_info=device_info,
-        )
-        self._attr_name = "score"
-        self._attr_unique_id = entry_id
 
-class TotalScore(Number):
+class TotalScore(NumberEntity):
     _attr_has_entity_name = True
     _attr_name = None
     _attr_mode = NumberMode.BOX
@@ -138,11 +134,85 @@ class TotalScore(Number):
 
     def __init__(
         self,
-        nudge_type: NudgeType,
+        entity_uuids_scores: dict[NudgeType, str],
+        domain: str,
+        entry_id:str,
         device_info: DeviceInfo | None = None,
     ) -> None:
         super().__init__()
         self._attr_device_info = device_info
         self.ranking_position = "0/0"
         self._attr_native_value: int = 0
-        self._nudge_type = nudge_type
+        self._entity_ids: dict[NudgeType, str] = {}
+        self._entity_uuids_scores = entity_uuids_scores
+        self._domain = domain
+        self._attr_name = "Total Score"
+        self._attr_unique_id: str = f"{entry_id}_total_score"
+
+    @staticmethod
+    def get_entity_ids_from_uuid(
+        entityRegistry: EntityRegistry, uuids: dict[NudgeType, str], domain: str
+    ):
+        entity_ids: dict[NudgeType, str] = {}
+
+        for nudgetype,uuid in uuids.items():
+            entity_id = entityRegistry.async_get_entity_id(
+                platform=domain, domain=Platform.NUMBER, unique_id=uuid
+            )
+            if entity_id:
+                entity_ids[nudgetype] = entity_id
+
+        return entity_ids
+
+    async def async_added_to_hass(self) -> None:
+        # Jeden Abend die Punkte aktualisieren
+        entity_registry = async_get_entity_registry(self.hass)
+        self._entity_ids = TotalScore.get_entity_ids_from_uuid(
+            entityRegistry=entity_registry,
+            uuids=self._entity_uuids_scores,
+            domain=self._domain,
+        )
+
+    async def async_update(self) -> None:
+        totalpoints: int = 0
+        points_per_nudge: dict[NudgeType, int] = {}
+        for nudge_type,score_entity in self._entity_ids.items():
+            state = self.hass.states.get(score_entity)
+            if state:
+                value = int(state.state)
+                totalpoints += value
+                points_per_nudge[nudge_type] = value
+
+        self._attr_native_value = totalpoints
+        self._attr_extra_state_attributes = {
+            str(nudge_type): score for nudge_type, score in points_per_nudge.items()
+        }
+
+        self.async_write_ha_state()
+
+    def get_entities_for_device_info(self, device_info):
+        """Get all entities for a given device_info."""
+        entity_registry = async_get_entity_registry(self.hass)
+        device_registry = async_get_device_registry(self.hass)
+
+        # Suche das Gerät im Device Registry basierend auf den Identifikatoren
+        device = None
+        for dev in device_registry.devices.values():
+            if any(
+                identifier in dev.identifiers
+                for identifier in device_info["identifiers"]
+            ):
+                device = dev
+                break
+
+        if device is None:
+            return []
+
+        # Verwende die device_id des gefundenen Geräts, um die Entitäten zu ermitteln
+        entities = [
+            entry.entity_id
+            for entry in entity_registry.entities.values()
+            if entry.device_id == device.id
+        ]
+
+        return entities
