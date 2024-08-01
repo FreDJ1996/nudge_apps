@@ -1,6 +1,6 @@
 {
     "domain": "nudge_ranking",
-    "name": "nudge ranking",
+    "name": "Nudge Ranking",
     "codeowners": [],
     "config_flow": true,
     "iot_class": "local_push",
