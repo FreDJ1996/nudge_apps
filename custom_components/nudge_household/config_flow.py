@@ -91,7 +91,7 @@ DATA_SCHEMAS = {
 
 SCHEMA_HEAT_PUMP = vol.Schema(
     {
-        vol.Required(CONF_E_Charger): selector.EntitySelector(
+        vol.Required(CONF_HEAT_PUMP): selector.EntitySelector(
             selector.EntitySelectorConfig(
                 domain=SENSOR_DOMAIN,
                 multiple=False,
@@ -195,7 +195,15 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             user_input[CONF_HEAT_SOURCE] == CONF_HEAT_OPTIONS[1]
         )
         if heat_pump:
-            DATA_SCHEMAS[NudgeType.HEAT_BUDGET].extend(SCHEMA_HEAT_PUMP)
+            # Create a new schema by merging the original and the heat pump schema
+            heat_budget_schema = vol.Schema(
+                {
+                    **DATA_SCHEMAS[NudgeType.HEAT_BUDGET].schema,  # Get the underlying schema dictionary
+                    **SCHEMA_HEAT_PUMP.schema,                    # Add the heat pump fields
+                }
+            )
+            # Update the global DATA_SCHEMAS dictionary
+            DATA_SCHEMAS[NudgeType.HEAT_BUDGET] = heat_budget_schema
 
         for source in energy_sources:
             if source["type"] == "grid":

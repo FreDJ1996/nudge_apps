@@ -41,7 +41,8 @@
                 "title": "Budget Wärmeverbrauch",
                 "description": "Erstelle ein Budget für den gesamten Wärmeverbrauch deines Haushalts",
                 "data": {
-                    "budget_yearly_heat": "Jährliches Wärme Budget"
+                    "budget_yearly_heat": "Jährliches Wärme Budget",
+                    "heat_pump": "Stromsensor Wärmepumpe"
                 }
             },
             "water": {

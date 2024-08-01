@@ -21,8 +21,8 @@ CONF_NAME_HOUSEHOLD = "name_household"
 
 CONF_HEAT_OPTIONS = [
     "Gas",
-    "Elektrisch mit eigenem Sensor",
-    "Kein Gas oder elektrisch ohne Sensor",
+    "Wärmepumpe mit Energie Sensor",
+    "Kein Strom Sensor",
 ]
 
 STEP_IDS = {
