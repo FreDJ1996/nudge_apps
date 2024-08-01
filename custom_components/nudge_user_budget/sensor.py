@@ -29,6 +29,12 @@ async def async_setup_entry(
     entity_id_user = config_entry.data.get(CONF_NUDGE_PERSON, "")
     budget_entities = config_entry.data.get(CONF_TRACKED_SENSOR_ENTITIES, {""})
 
+    start = entity_id_user.find(".") + 1
+    end = entity_id_user.find(
+        "_", start
+    )
+    name_user = entity_id_user[start:end]
+    name_user = name_user.capitalize()
     registry = er.async_get(hass)
     # Validate + resolve entity registry id to entity_id
     source_entity_id = er.async_validate_entity_id(registry, entity_id_user)
@@ -58,7 +64,7 @@ async def async_setup_entry(
             goal=budget_goals[budget_type],
             score_entity=entity_id_user,
             budget_entities=budget_entities,
-            attr_name=budget_type.name,
+            attr_name=f"{name_user} {budget_type.name}",
             device_info=device_info,
             nudge_period=budget_type,
             nudge_type=NudgeType.ELECTRICITY_BUDGET,

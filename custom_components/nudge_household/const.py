@@ -4,7 +4,7 @@ from custom_components.nudgeplatform.const import NudgeType
 from homeassistant.config_entries import ConfigEntry
 from dataclasses import dataclass
 
-DOMAIN = "nudge_household"
+DOMAIN_NUDGE_HOUSEHOLD = "nudge_household"
 CONF_SIZE_HOUSEHOLD = "number_persons"
 CONF_ENERGIE_EFFICIENCY = "final_energy_consumption"
 CONF_APARTMENT_SIZE = "apartment_size"

@@ -25,7 +25,7 @@ from .const import (
     CONF_BUDGET_YEARLY_HEAT,
     CONF_LAST_YEAR_CONSUMED,
     CONF_SIZE_HOUSEHOLD,
-    DOMAIN,
+    DOMAIN_NUDGE_HOUSEHOLD,
     STEP_IDS,
     CONF_NAME_HOUSEHOLD,
     MyConfigEntry,
@@ -73,6 +73,7 @@ class Autarky(Nudge):
     async def async_update(self) -> None:
         self._last_update = datetime.now(tz=dt_util.DEFAULT_TIME_ZONE)
         self._attr_native_value = await self.get_autarky()
+        self._goal_reached = self._attr_native_value > self._goal
         self.async_write_ha_state()
 
 
@@ -93,7 +94,9 @@ async def async_setup_entry(
     for nudge_type, unique_id in score_device_unique_ids.items():
         if unique_id:
             nudge_type_score_entity_ids[nudge_type] = er.async_get_entity_id(
-                platform=DOMAIN, domain=Platform.NUMBER, unique_id=unique_id
+                platform=DOMAIN_NUDGE_HOUSEHOLD,
+                domain=Platform.NUMBER,
+                unique_id=unique_id,
             )
 
     autarky_goal = config_entry.data.get(CONF_AUTARKY_GOAL)
@@ -159,7 +162,9 @@ def create_budget_device(
 ) -> list[Budget]:
     nudge_medium_type = STEP_IDS[nudge_type]
     device_info = DeviceInfo(
-        identifiers={(f"{DOMAIN}_{nudge_medium_type}", config_entry.entry_id)},
+        identifiers={
+            (f"{DOMAIN_NUDGE_HOUSEHOLD}_{nudge_medium_type}", config_entry.entry_id)
+        },
         entry_type=DeviceEntryType.SERVICE,
         name=f"Household {nudge_medium_type}",
         translation_key=f"household_{nudge_medium_type}",
@@ -177,7 +182,7 @@ def create_budget_device(
             budget_entities=budget_entities,
             score_entity=score_entity,
             nudge_type=nudge_type,
-            domain=DOMAIN,
+            domain=DOMAIN_NUDGE_HOUSEHOLD,
         )
         for nudge_period in NudgePeriod
     ]
@@ -192,7 +197,9 @@ def create_autarky_device(
 ) -> list[Autarky]:
     nudge_medium_type = STEP_IDS[NudgeType.AUTARKY_GOAL]
     device_info_autarky = DeviceInfo(
-        identifiers={(f"{DOMAIN}_{nudge_medium_type}", config_entry.entry_id)},
+        identifiers={
+            (f"{DOMAIN_NUDGE_HOUSEHOLD}_{nudge_medium_type}", config_entry.entry_id)
+        },
         entry_type=DeviceEntryType.SERVICE,
         name=f"Household {nudge_medium_type}",
         translation_key=f"household_{nudge_medium_type}",
@@ -201,12 +208,12 @@ def create_autarky_device(
         Autarky(
             device_info=device_info_autarky,
             nudge_period=nudge_period,
-            attr_name=f"{config_entry.title}_{NudgeType.AUTARKY_GOAL}_{nudge_period.name}",
+            attr_name=f"{config_entry.title}_{NudgeType.AUTARKY_GOAL.name}_{nudge_period.name}",
             entry_id=f"{config_entry.entry_id}_{nudge_medium_type}",
             goal=autarky_goal,
             energy_entities=energy_entities,
             score_entity=score_entity,
-            domain=DOMAIN,
+            domain=DOMAIN_NUDGE_HOUSEHOLD,
         )
         for nudge_period in NudgePeriod
     ]

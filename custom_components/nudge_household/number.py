@@ -5,14 +5,14 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.hacs import entity
 from custom_components.nudgeplatform.const import NudgeType
-from custom_components.nudgeplatform.number import Score, register_services,TotalScore
+from custom_components.nudgeplatform.number import Score, register_services, TotalScore
 
 from .const import (
     CONF_NAME_HOUSEHOLD,
     CONF_AUTARKY_GOAL,
     CONF_BUDGET_YEARLY_HEAT,
     CONF_BUDGET_YEARLY_ELECTRICITY,
-    DOMAIN,
+    DOMAIN_NUDGE_HOUSEHOLD,
     MyConfigEntry,
 )
 
@@ -29,7 +29,7 @@ async def async_setup_entry(
 
     score_device_unique_ids: dict[NudgeType, str] = {}
 
-    identifier = (f"{DOMAIN}_score", config_entry.entry_id)
+    identifier = (f"{DOMAIN_NUDGE_HOUSEHOLD}_score", config_entry.entry_id)
     device_info = DeviceInfo(
         identifiers={identifier},
         entry_type=DeviceEntryType.SERVICE,
@@ -37,7 +37,7 @@ async def async_setup_entry(
         translation_key="household_scoreboard",
     )
 
-    nudge_types: set[NudgeType]=set()
+    nudge_types: set[NudgeType] = set()
 
     autarky_goal = config_entry.data.get(CONF_AUTARKY_GOAL)
     if autarky_goal:
@@ -68,8 +68,13 @@ async def async_setup_entry(
 
     config_entry.runtime_data.score_device_unique_ids = score_device_unique_ids
 
-    score_entities.add(TotalScore(entity_uuids_scores=score_device_unique_ids,domain=DOMAIN,device_info=device_info,entry_id=entry_id))
+    score_entities.add(
+        TotalScore(
+            entity_uuids_scores=score_device_unique_ids,
+            domain=DOMAIN_NUDGE_HOUSEHOLD,
+            device_info=device_info,
+            entry_id=entry_id,
+        )
+    )
 
     async_add_entities(score_entities)
-
-

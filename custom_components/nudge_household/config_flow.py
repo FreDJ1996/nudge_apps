@@ -27,12 +27,12 @@ from .const import (
     CONF_NAME_HOUSEHOLD,
     CONF_SIZE_HOUSEHOLD,
     CONF_TITLE,
-    DOMAIN,
+    DOMAIN_NUDGE_HOUSEHOLD,
     CONF_BUDGET_YEARLY_ELECTRICITY,
     CONF_BUDGET_YEARLY_HEAT,
     NudgeType,
     STEP_IDS,
-    CONF_ENERGIE_EFFICIENCY
+    CONF_ENERGIE_EFFICIENCY,
 )
 from homeassistant.data_entry_flow import FlowResult
 
@@ -159,7 +159,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         )
 
 
-class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN_NUDGE_HOUSEHOLD):
     """Example config flow."""
 
     VERSION = 1
@@ -198,8 +198,10 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             # Create a new schema by merging the original and the heat pump schema
             heat_budget_schema = vol.Schema(
                 {
-                    **DATA_SCHEMAS[NudgeType.HEAT_BUDGET].schema,  # Get the underlying schema dictionary
-                    **SCHEMA_HEAT_PUMP.schema,                    # Add the heat pump fields
+                    **DATA_SCHEMAS[
+                        NudgeType.HEAT_BUDGET
+                    ].schema,  # Get the underlying schema dictionary
+                    **SCHEMA_HEAT_PUMP.schema,  # Add the heat pump fields
                 }
             )
             # Update the global DATA_SCHEMAS dictionary

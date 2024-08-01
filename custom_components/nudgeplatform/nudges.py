@@ -25,7 +25,14 @@ from .const import (
     NudgeType,
 )
 
+from homeassistant.helpers import entity_registry
+
 _LOGGER = logging.getLogger(__name__)
+
+
+def get_entity_from_uuid(hass:HomeAssistant, uuid:str, domain:str, platform:str)-> str|None:
+    er = entity_registry.async_get(hass)
+    return er.async_get_entity_id(platform=domain,domain=platform,unique_id=uuid)
 
 
 def get_start_time(nudge_period: NudgePeriod) -> datetime:
@@ -263,6 +270,7 @@ class Budget(Nudge):
         attributes["last_update"] = self._last_update
         attributes["actual"] = self._actual
         attributes["goal"] = self._goal
+        attributes["actual/goal"] = f"{self._actual} kWh / {self._goal} kWh"
         # TODO
         if self._show_actual:
             attributes["attribute"] = "actual"

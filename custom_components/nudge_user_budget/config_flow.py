@@ -53,9 +53,15 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(self, user_input=None):
         errors = {}
         if user_input is not None:
-            name_of_person = str(user_input[CONF_NUDGE_PERSON])
-            name_of_person = name_of_person.rsplit("_", 1)[1].capitalize()
-            title = "Budget_" + str(name_of_person)
+            entity_id_user = user_input.get(CONF_NUDGE_PERSON, "")
+
+            start = entity_id_user.find(".") + 1
+            end = entity_id_user.find(
+                "_", start
+            )
+            name_user:str = entity_id_user[start:end]
+            name_user = name_user.capitalize()
+            title = "Budget " + str(name_user)
 
             return self.async_create_entry(
                 title=title, data=user_input
