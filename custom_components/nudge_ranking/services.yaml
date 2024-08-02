@@ -1,0 +1,7 @@
+set_ranking_position:
+  name: Get Ranking Position
+  description: Get Ranking Position of Score
+  target:
+    entity:
+      domain: sensor
+      integration: nudge_ranking

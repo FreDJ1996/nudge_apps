@@ -3,9 +3,13 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo, DeviceEntryType
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from custom_components.hacs import entity
 from custom_components.nudgeplatform.const import NudgeType
-from custom_components.nudgeplatform.number import Score, register_services, TotalScore
+from custom_components.nudgeplatform.number import (
+    Score,
+    register_services,
+    TotalScore,
+    Streak,
+)
 
 from .const import (
     CONF_NAME_HOUSEHOLD,
@@ -24,7 +28,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Initialize nudgeplatform config entry."""
-    score_entities = set()
+    entities = set()
     name_household = config_entry.data.get(CONF_NAME_HOUSEHOLD, "")
 
     score_device_unique_ids: dict[NudgeType, str] = {}
@@ -57,18 +61,26 @@ async def async_setup_entry(
 
     entry_id = config_entry.entry_id
     for nudge_type in nudge_types:
+        streak = Streak(
+            nudge_type=nudge_type,
+            entry_id=config_entry.entry_id,
+            device_info=device_info,
+        )
+        entities.add(streak)
         entity = Score(
             entry_id=entry_id,
             nudge_type=nudge_type,
             device_info=device_info,
+            streak=streak,
+            domain=DOMAIN_NUDGE_HOUSEHOLD
         )
         score_device_unique_ids[nudge_type] = entity.get_unique_id()
-        score_entities.add(entity)
+        entities.add(entity)
     register_services()
 
     config_entry.runtime_data.score_device_unique_ids = score_device_unique_ids
 
-    score_entities.add(
+    entities.add(
         TotalScore(
             entity_uuids_scores=score_device_unique_ids,
             domain=DOMAIN_NUDGE_HOUSEHOLD,
@@ -77,4 +89,4 @@ async def async_setup_entry(
         )
     )
 
-    async_add_entities(score_entities)
+    async_add_entities(entities)

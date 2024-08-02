@@ -215,7 +215,7 @@ class Nudge(SensorEntity):
             await self.hass.services.async_call(
                 domain=self._domain,
                 service=SERVICE_ADD_POINTS_TO_USER,
-                service_data={"points": points},
+                service_data={"goal_reached": self._goal_reached},
                 target={"entity_id": self._score_entity},
             )
 

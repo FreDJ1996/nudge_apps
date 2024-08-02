@@ -1,4 +1,6 @@
+from datetime import datetime
 from homeassistant.components.number import RestoreNumber, NumberMode, NumberEntity
+from homeassistant.components.number.const import NumberDeviceClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import (
@@ -16,6 +18,9 @@ from homeassistant.helpers.entity_registry import (
     async_get as async_get_entity_registry,
 )
 from homeassistant.const import Platform
+from homeassistant.helpers.event import (
+    async_track_point_in_time,
+)
 
 from .const import (
     CONF_NUDGE_PERSON,
@@ -23,7 +28,7 @@ from .const import (
     SERVICE_SET_RANK_FOR_USER,
     SERVICE_ADD_POINTS_TO_USER,
     NudgeType,
-    SERVICE_UPDATE_STREAK,
+    SERVICE_UPDATE_STREAK
 )
 
 
@@ -41,16 +46,16 @@ def register_services() -> None:
     platform.async_register_entity_service(
         SERVICE_ADD_POINTS_TO_USER,
         {
-            vol.Required("points"): cv.positive_int,
+            vol.Required("goal_reached"): cv.boolean,
         },
         SERVICE_ADD_POINTS_TO_USER,
     )
     platform.async_register_entity_service(
-    SERVICE_UPDATE_STREAK,
-    {
-        vol.Required("goal_reached"): cv.boolean,
-    },
-    SERVICE_UPDATE_STREAK,
+        SERVICE_UPDATE_STREAK,
+        {
+            vol.Required("goal_reached"): cv.boolean,
+        },
+        SERVICE_UPDATE_STREAK,
     )
 
 
@@ -70,52 +75,32 @@ async def async_setup_entry(
         name=name,
     )
 
+    streak = Streak(
+        NudgeType.ELECTRICITY_BUDGET,
+        entry_id=config_entry.entry_id,
+        device_info=device_info,
+    )
+    entities.append(streak)
+
     entities.append(
         Score(
             entry_id=config_entry.entry_id,
             device_info=device_info,
             nudge_type=NudgeType.ELECTRICITY_BUDGET,
+            streak=streak,
+            domain=DOMAIN
         )
     )
-    entities.append(Streak(NudgeType.ELECTRICITY_BUDGET,entry_id=config_entry.entry_id,device_info=device_info))
+
     register_services()
     async_add_entities(entities)
+
 
 class Streak(RestoreNumber):
     _attr_has_entity_name = True
     _attr_name = None
     _attr_mode = NumberMode.BOX
     _attr_native_unit_of_measurement = "days"
-
-    def __init__(
-            self,
-            nudge_type: NudgeType,
-            entry_id: str,
-            device_info: DeviceInfo | None = None,
-        ) -> None:
-            super().__init__()
-            self._attr_device_info = device_info
-            self._attr_native_value: int = 0
-            self.nudge_type = nudge_type
-            self._attr_name = f"Streak {nudge_type.name.replace("_"," ").capitalize()}"
-            self._attr_unique_id: str = f"{entry_id}_{nudge_type.name}_Streak"
-
-    async def update_streak(self, goal_reached: bool)->None:
-        if goal_reached:
-            self._attr_native_value = 0
-        else:
-            self._attr_native_value += 1
-
-    def get_unique_id(self) -> str:
-        return self._attr_unique_id
-
-class Score(RestoreNumber):
-    """Nudge Person for Nudging."""
-
-    _attr_has_entity_name = True
-    _attr_name = None
-    _attr_mode = NumberMode.BOX
-    _attr_native_unit_of_measurement = "points"
 
     def __init__(
         self,
@@ -125,11 +110,48 @@ class Score(RestoreNumber):
     ) -> None:
         super().__init__()
         self._attr_device_info = device_info
+        self._attr_native_value: int = 0
+        self.nudge_type = nudge_type
+        self._attr_name = f"Streak {nudge_type.name.replace("_"," ").capitalize()}"
+        self._attr_unique_id: str = f"{entry_id}_{nudge_type.name}_Streak"
+
+    async def update_streak(self, goal_reached: bool) -> None:
+        if goal_reached:
+            self._attr_native_value += 1
+        else:
+            self._attr_native_value = 0
+
+    def get_unique_id(self) -> str:
+        return self._attr_unique_id
+
+
+class Score(RestoreNumber):
+    """Nudge Person for Nudging."""
+
+    _attr_has_entity_name = True
+    _attr_name = None
+    _attr_mode = NumberMode.BOX
+    _attr_native_unit_of_measurement = "points"
+    _attr_device_class = NumberDeviceClass.AQI
+
+    def __init__(
+        self,
+        nudge_type: NudgeType,
+        entry_id: str,
+        streak: Streak,
+        domain:str,
+        device_info: DeviceInfo | None = None,
+    ) -> None:
+        super().__init__()
+        self._attr_device_info = device_info
         self.ranking_position = "0/0"
         self._attr_native_value: int = 0
         self.nudge_type = nudge_type
         self._attr_name = f"Score {nudge_type.name.replace("_"," ").capitalize()}"
         self._attr_unique_id: str = f"{entry_id}_{nudge_type.name}_Score"
+        self._streak_uuid = streak.get_unique_id()
+        self._streak_entity_id = None
+        self._domain = domain
 
     async def set_ranking_position(
         self, ranking_position: int, ranking_length: int
@@ -139,10 +161,25 @@ class Score(RestoreNumber):
     async def add_points_to_score(self, goal_reached: bool) -> None:
         if goal_reached:
             self._attr_native_value += 1
+        if not self._streak_entity_id:
+            entity_registry = async_get_entity_registry(self.hass)
+            self._streak_entity_id = entity_registry.async_get_entity_id(
+                platform=self._domain, domain=Platform.NUMBER, unique_id=self._streak_uuid
+            )
 
+        await self.hass.services.async_call(
+            domain=self._domain,
+            service=SERVICE_UPDATE_STREAK,
+            service_data={"goal_reached": goal_reached},
+            target={"entity_id": self._streak_entity_id},
+        )
 
     def get_unique_id(self) -> str:
         return self._attr_unique_id
+
+    @callback
+    def reset_score(self, _: datetime) -> None:
+        self._attr_native_value = 0
 
     @property
     def extra_state_attributes(self) -> dict:
@@ -150,6 +187,9 @@ class Score(RestoreNumber):
         return {"rank": self.ranking_position}
 
     async def async_added_to_hass(self) -> None:
+        now = datetime.now()
+        new_year= now.replace(year=now.year+1,month=1,day=1,hour=0,minute=0,second=0)
+        async_track_point_in_time(self.hass,self.reset_score,new_year)
         """Restore last state."""
         last_number_data = await self.async_get_last_number_data()
         if last_number_data and last_number_data.native_value:
@@ -157,11 +197,12 @@ class Score(RestoreNumber):
         else:
             self._attr_native_value = 0
 
+
     async def async_set_native_value(self, value: float) -> None:
-       """Update the current value."""
-       if value.is_integer():
-           self._attr_native_value = int(value)
-           self.async_write_ha_state()
+        """Update the current value."""
+        if value.is_integer():
+            self._attr_native_value = int(value)
+            self.async_write_ha_state()
 
 
 class TotalScore(NumberEntity):
@@ -174,7 +215,7 @@ class TotalScore(NumberEntity):
         self,
         entity_uuids_scores: dict[NudgeType, str],
         domain: str,
-        entry_id:str,
+        entry_id: str,
         device_info: DeviceInfo | None = None,
     ) -> None:
         super().__init__()
@@ -187,14 +228,13 @@ class TotalScore(NumberEntity):
         self._attr_name = "Total Score"
         self._attr_unique_id: str = f"{entry_id}_total_score"
 
-
     @staticmethod
     def get_entity_ids_from_uuid(
         entityRegistry: EntityRegistry, uuids: dict[NudgeType, str], domain: str
     ):
         entity_ids: dict[NudgeType, str] = {}
 
-        for nudgetype,uuid in uuids.items():
+        for nudgetype, uuid in uuids.items():
             entity_id = entityRegistry.async_get_entity_id(
                 platform=domain, domain=Platform.NUMBER, unique_id=uuid
             )
@@ -204,7 +244,6 @@ class TotalScore(NumberEntity):
         return entity_ids
 
     async def async_added_to_hass(self) -> None:
-        # Jeden Abend die Punkte aktualisieren
         entity_registry = async_get_entity_registry(self.hass)
         self._entity_ids = TotalScore.get_entity_ids_from_uuid(
             entityRegistry=entity_registry,
@@ -215,7 +254,7 @@ class TotalScore(NumberEntity):
     async def async_update(self) -> None:
         totalpoints: int = 0
         points_per_nudge: dict[NudgeType, int] = {}
-        for nudge_type,score_entity in self._entity_ids.items():
+        for nudge_type, score_entity in self._entity_ids.items():
             state = self.hass.states.get(score_entity)
             if state:
                 value = int(state.state)

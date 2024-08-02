@@ -3,7 +3,7 @@ from sqlalchemy import false
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.components.sensor.const import DOMAIN as SENSOR_DOMAIN, SensorDeviceClass
-from homeassistant.components.number.const import DOMAIN as NUMBER_DOMAIN
+from homeassistant.components.number.const import DOMAIN as NUMBER_DOMAIN, NumberDeviceClass
 from homeassistant.helpers import selector
 from .const import DOMAIN
 
@@ -20,7 +20,7 @@ DATA_SCHEMA = vol.Schema(
             selector.EntitySelectorConfig(
                 domain=NUMBER_DOMAIN,
                 multiple=False,
-                filter=selector.EntityFilterSelectorConfig(integration=NUDGE_PLATFORM_DOMAIN)
+                filter=selector.EntityFilterSelectorConfig(integration=NUDGE_PLATFORM_DOMAIN,device_class=NumberDeviceClass.AQI)
             )
         ),
         vol.Required(CONF_BUDGET_YEARLY): selector.NumberSelector(
