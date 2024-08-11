@@ -5,14 +5,10 @@
     "config_flow": true,
     "iot_class": "local_poll",
     "version": "0.0.0",
-    "requirements": ["google-cloud-firestore"],
     "single_config_entry": true,
-    "dependencies": [
-        "nudgeplatform"
-    ],
     "platforms": [
-        "sensor",
-        "number"
+        "number",
+        "sensor"
     ],
     "integration_type": "hub"
 }

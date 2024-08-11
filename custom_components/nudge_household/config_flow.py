@@ -11,13 +11,14 @@ from homeassistant.components.energy import (
 )
 from homeassistant.helpers import selector
 import homeassistant.helpers.config_validation as cv
-from custom_components.nudgeplatform.const import (
+from custom_components.nudge_household.platform import (
     NudgeType,
 )
 from homeassistant.core import callback
 
 from .const import (
     CONF_AUTARKY_GOAL,
+    CONF_BUDGET_ELECTRICITY_REDUCTION_GOAL,
     CONF_HEAT_OPTIONS,
     CONF_HEAT_SOURCE,
     CONF_HEAT_PUMP,
@@ -33,6 +34,10 @@ from .const import (
     NudgeType,
     STEP_IDS,
     CONF_ENERGIE_EFFICIENCY,
+    CONF_BUDGET_HEAT_REDUCTION_GOAL,
+    CONF_AUTARKY_GOAL_INCREASE,
+    CONF_BUDGET_WATER_REDUCTION_GOAL,
+    CONF_BUDGET_YEARLY_WATER
 )
 from homeassistant.data_entry_flow import FlowResult
 
@@ -47,7 +52,18 @@ DATA_SCHEMAS = {
                     mode=selector.NumberSelectorMode.SLIDER,
                     unit_of_measurement="kWh",
                 )
-            )
+            ),
+            vol.Required(
+                CONF_BUDGET_ELECTRICITY_REDUCTION_GOAL
+            ): selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=1,
+                    max=50,
+                    step=1,
+                    mode=selector.NumberSelectorMode.SLIDER,
+                    unit_of_measurement="%",
+                )
+            ),
         }
     ),
     NudgeType.HEAT_BUDGET: vol.Schema(
@@ -60,7 +76,16 @@ DATA_SCHEMAS = {
                     mode=selector.NumberSelectorMode.SLIDER,
                     unit_of_measurement="kWh",
                 )
-            )
+            ),
+            vol.Required(CONF_BUDGET_HEAT_REDUCTION_GOAL): selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=1,
+                    max=50,
+                    step=1,
+                    mode=selector.NumberSelectorMode.SLIDER,
+                    unit_of_measurement="%",
+                )
+            ),
         }
     ),
     NudgeType.AUTARKY_GOAL: vol.Schema(
@@ -72,19 +97,37 @@ DATA_SCHEMAS = {
                     mode=selector.NumberSelectorMode.SLIDER,
                     unit_of_measurement="%",
                 )
-            )
+            ),
+            vol.Required(CONF_AUTARKY_GOAL_INCREASE): selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=1,
+                    max=50,
+                    step=1,
+                    mode=selector.NumberSelectorMode.SLIDER,
+                    unit_of_measurement="%",
+                )
+            ),
         }
     ),
     NudgeType.WATER_BUDGET: vol.Schema(
         {
-            vol.Required(CONF_AUTARKY_GOAL): selector.NumberSelector(
+            vol.Required(CONF_BUDGET_YEARLY_WATER): selector.NumberSelector(
                 selector.NumberSelectorConfig(
                     min=1000,
                     max=10000,
                     mode=selector.NumberSelectorMode.SLIDER,
                     unit_of_measurement="liter",
                 )
-            )
+            ),
+            vol.Required(CONF_BUDGET_WATER_REDUCTION_GOAL): selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=1,
+                    max=50,
+                    step=1,
+                    mode=selector.NumberSelectorMode.SLIDER,
+                    unit_of_measurement="%",
+                )
+            ),
         }
     ),
 }

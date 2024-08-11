@@ -3,8 +3,8 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo, DeviceEntryType
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from custom_components.nudgeplatform.const import NudgeType
-from custom_components.nudgeplatform.number import (
+from .platform import NudgeType
+from .platform import (
     Score,
     register_services,
     TotalScore,

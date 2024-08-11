@@ -3,59 +3,44 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import (
     device_registry as dr,
 )
-from homeassistant.helpers import (
-    entity_registry as er,
-)
+from homeassistant.helpers import entity_registry
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-
-from custom_components.nudgeplatform.const import (
+from homeassistant.const import Platform
+from custom_components.nudge_household.platform import (
     CONF_BUDGET_YEARLY,
     CONF_NUDGE_PERSON,
     CONF_TRACKED_SENSOR_ENTITIES,
     NudgeType,
-    DOMAIN as NUDGE_PLATFORM_DOMAIN
 )
-from custom_components.nudgeplatform.nudges import Budget, NudgePeriod
+
+from .const import DOMAIN, MyConfigEntry,CONF_BUDGET_ELECTRICITY_REDUCTION_GOAL
+
+from custom_components.nudge_household.platform import Budget, NudgePeriod
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
+    config_entry: MyConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     entry_id = config_entry.entry_id
     yearly_goal = config_entry.data.get(CONF_BUDGET_YEARLY, 0)
-    entity_id_user = config_entry.data.get(CONF_NUDGE_PERSON, "")
+    name_user = config_entry.data.get(CONF_NUDGE_PERSON, "")
     budget_entities = config_entry.data.get(CONF_TRACKED_SENSOR_ENTITIES, {""})
+    reduction_goal = config_entry.data.get(CONF_BUDGET_ELECTRICITY_REDUCTION_GOAL,0)
 
-    start = entity_id_user.find(".") + 1
-    end = entity_id_user.find(
-        "_", start
+    score_device_unique_id = config_entry.runtime_data.score_device_unique_id
+
+    er = entity_registry.async_get(hass)
+
+    entity_id_user = er.async_get_entity_id(
+    platform=DOMAIN,
+    domain=Platform.NUMBER,
+    unique_id=score_device_unique_id,
     )
-    name_user = entity_id_user[start:end]
-    name_user = name_user.capitalize()
-    registry = er.async_get(hass)
-    # Validate + resolve entity registry id to entity_id
-    source_entity_id = er.async_validate_entity_id(registry, entity_id_user)
 
-    source_entity = registry.async_get(source_entity_id)
-    dev_reg = dr.async_get(hass)
-    # Resolve source entity device
-    if (
-        (source_entity is not None)
-        and (source_entity.device_id is not None)
-        and (
-            (
-                device := dev_reg.async_get(
-                    device_id=source_entity.device_id,
-                )
-            )
-            is not None
-        )
-    ):
-        device_info = DeviceInfo(identifiers=device.identifiers)
-
+    device_info = config_entry.runtime_data.device_info
 
     budget_goals = Budget.calculate_goals(yearly_goal=yearly_goal)
     entities = [
@@ -68,7 +53,8 @@ async def async_setup_entry(
             device_info=device_info,
             nudge_period=budget_type,
             nudge_type=NudgeType.ELECTRICITY_BUDGET,
-            domain=NUDGE_PLATFORM_DOMAIN
+            domain=DOMAIN,
+            reduction_goal=reduction_goal
         )
         for budget_type in NudgePeriod
     ]

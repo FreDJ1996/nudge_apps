@@ -27,14 +27,16 @@
                 "title": "Budget Stromverbrauch",
                 "description": "Erstelle ein Budget für den gesamten Stromverbrauch deines Haushalts, nehme zum Beispiel den Verbrauch des letzten Jahres und reduziere ihn um 10%",
                 "data":{
-                    "budget_yearly_electricity": "Jährliches Strom Budget"
+                    "budget_yearly_electricity": "Jährliches Strom Budget",
+                    "budget_electricity_reduction_goal": "Jährliches Reduktionsziel Strom Budget"
                 }
             },
             "autarky": {
                 "title": "Autarkie Ziel Haushalt",
                 "description": "Gib den Zielwert für Autarkie in Prozent für den Haushalt an",
                 "data": {
-                    "goal_autarky": "Autarkie Ziel"
+                    "goal_autarky": "Autarkie Ziel",
+                    "autarky_goal_increase": "Jährliche Steigerung Autarkie"
                 }
             },
             "heat": {
@@ -42,14 +44,16 @@
                 "description": "Erstelle ein Budget für den gesamten Wärmeverbrauch deines Haushalts",
                 "data": {
                     "budget_yearly_heat": "Jährliches Wärme Budget",
-                    "heat_pump": "Stromsensor Wärmepumpe"
+                    "heat_pump": "Stromsensor Wärmepumpe",
+                    "budget_heat_reduction_goal": "Jährliches Reduktionsziel Wärme Budget"
                 }
             },
             "water": {
                 "title": "Budget Wassserverbrauch",
                 "description": "Erstelle ein Budget für den gesamten Wasserverbrauch deines Haushalts",
                 "data": {
-                    "budget_yearly_heat": "Jährliches Wasser Budget"
+                    "budget_yearly_heat": "Jährliches Wasser Budget",
+                    "budget_water_reduction_goal": "Jährliches Reduktionsziel Wasser Budget"
                 }
             }
         },

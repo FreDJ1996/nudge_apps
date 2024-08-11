@@ -5,11 +5,11 @@
     "config_flow": true,
     "iot_class": "local_poll",
     "version": "0.0.0",
-    "requirements": [ ],
     "dependencies": [
-        "nudgeplatform"
+        "nudge_household"
     ],
     "platforms": [
+        "number",
         "sensor"
     ]
 }

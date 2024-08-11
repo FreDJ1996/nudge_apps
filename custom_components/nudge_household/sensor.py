@@ -1,35 +1,121 @@
 from datetime import datetime
-from xml import dom
 
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
 
-from custom_components.nudgeplatform.const import EnergyElectricDevices, NudgeType
-from custom_components.nudgeplatform.nudges import (
+from custom_components.nudge_household.platform import (
     Budget,
+    EnergyElectricDevices,
     Nudge,
     NudgePeriod,
+    NudgeType,
     get_energy_entities,
     get_own_total_consumtion,
 )
-from custom_components.nudgeplatform.number import Score
-from homeassistant.helpers import entity_registry, device_registry
-from homeassistant.const import Platform
 
 from .const import (
     CONF_AUTARKY_GOAL,
+    CONF_BUDGET_ELECTRICITY_REDUCTION_GOAL,
+    CONF_BUDGET_HEAT_REDUCTION_GOAL,
+    CONF_BUDGET_WATER_REDUCTION_GOAL,
     CONF_BUDGET_YEARLY_ELECTRICITY,
     CONF_BUDGET_YEARLY_HEAT,
     CONF_LAST_YEAR_CONSUMED,
+    CONF_NAME_HOUSEHOLD,
     CONF_SIZE_HOUSEHOLD,
     DOMAIN_NUDGE_HOUSEHOLD,
     STEP_IDS,
-    CONF_NAME_HOUSEHOLD,
     MyConfigEntry,
 )
+
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    config_entry: MyConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    yearly_goal = config_entry.data.get(CONF_LAST_YEAR_CONSUMED, 0)
+    number_of_persons = config_entry.data.get(CONF_SIZE_HOUSEHOLD, {""})
+    name_household = config_entry.data.get(CONF_NAME_HOUSEHOLD, "")
+    energy_entities, gas, water = await get_energy_entities(hass=hass)
+
+    entities = []
+    er = entity_registry.async_get(hass)
+    score_device_unique_ids = config_entry.runtime_data.score_device_unique_ids
+    nudge_type_score_entity_ids: dict[NudgeType, str | None] = {}
+    for nudge_type, unique_id in score_device_unique_ids.items():
+        if unique_id:
+            nudge_type_score_entity_ids[nudge_type] = er.async_get_entity_id(
+                platform=DOMAIN_NUDGE_HOUSEHOLD,
+                domain=Platform.NUMBER,
+                unique_id=unique_id,
+            )
+
+    autarky_goal = config_entry.data.get(CONF_AUTARKY_GOAL)
+    if autarky_goal:
+        entities.extend(
+            create_autarky_device(
+                config_entry,
+                energy_entities,
+                autarky_goal,
+                score_entity=nudge_type_score_entity_ids[NudgeType.AUTARKY_GOAL],
+            )
+        )
+
+    electricity_budget_goal = config_entry.data.get(CONF_BUDGET_YEARLY_ELECTRICITY)
+
+    if electricity_budget_goal:
+        electricity_reduction_goal = config_entry.data.get(
+            CONF_BUDGET_ELECTRICITY_REDUCTION_GOAL, 0
+        )
+        nudge_type = NudgeType.ELECTRICITY_BUDGET
+        entities.extend(
+            create_budget_device(
+                config_entry=config_entry,
+                nudge_type=nudge_type,
+                energy_entities=energy_entities,
+                budget_yearly_goal=electricity_budget_goal,
+                score_entity=nudge_type_score_entity_ids[nudge_type],
+                reduction_goal=electricity_reduction_goal,
+            )
+        )
+
+    heat_budget_goal = config_entry.data.get(CONF_BUDGET_YEARLY_HEAT)
+    if heat_budget_goal and gas:
+        heat_reduction_goal = config_entry.data.get(CONF_BUDGET_HEAT_REDUCTION_GOAL, 0)
+        nudge_type = NudgeType.HEAT_BUDGET
+        entities.extend(
+            create_budget_device(
+                config_entry=config_entry,
+                nudge_type=nudge_type,
+                budget_entities={gas},
+                budget_yearly_goal=heat_budget_goal,
+                score_entity=nudge_type_score_entity_ids[nudge_type],
+                reduction_goal=heat_reduction_goal,
+            )
+        )
+    water_budget_goal = config_entry.data.get(CONF_BUDGET_YEARLY_HEAT)
+    if water_budget_goal and water:
+        water_reduction_goal = config_entry.data.get(
+            CONF_BUDGET_WATER_REDUCTION_GOAL, 0
+        )
+        nudge_type = NudgeType.WATER_BUDGET
+        entities.extend(
+            create_budget_device(
+                config_entry=config_entry,
+                nudge_type=nudge_type,
+                budget_entities={water},
+                budget_yearly_goal=water_budget_goal,
+                score_entity=nudge_type_score_entity_ids[nudge_type],
+                reduction_goal=water_reduction_goal,
+            )
+        )
+    async_add_entities(entities)
 
 
 class Autarky(Nudge):
@@ -76,87 +162,12 @@ class Autarky(Nudge):
         self._goal_reached = self._attr_native_value > self._goal
         self.async_write_ha_state()
 
-
-async def async_setup_entry(
-    hass: HomeAssistant,
-    config_entry: MyConfigEntry,
-    async_add_entities: AddEntitiesCallback,
-) -> None:
-    yearly_goal = config_entry.data.get(CONF_LAST_YEAR_CONSUMED, 0)
-    number_of_persons = config_entry.data.get(CONF_SIZE_HOUSEHOLD, {""})
-    name_household = config_entry.data.get(CONF_NAME_HOUSEHOLD, "")
-    energy_entities, gas, water = await get_energy_entities(hass=hass)
-
-    entities = []
-    er = entity_registry.async_get(hass)
-    score_device_unique_ids = config_entry.runtime_data.score_device_unique_ids
-    nudge_type_score_entity_ids: dict[NudgeType, str | None] = {}
-    for nudge_type, unique_id in score_device_unique_ids.items():
-        if unique_id:
-            nudge_type_score_entity_ids[nudge_type] = er.async_get_entity_id(
-                platform=DOMAIN_NUDGE_HOUSEHOLD,
-                domain=Platform.NUMBER,
-                unique_id=unique_id,
-            )
-
-    autarky_goal = config_entry.data.get(CONF_AUTARKY_GOAL)
-    if autarky_goal:
-        entities.extend(
-            create_autarky_device(
-                config_entry,
-                energy_entities,
-                autarky_goal,
-                score_entity=nudge_type_score_entity_ids[NudgeType.AUTARKY_GOAL],
-            )
-        )
-
-    electricity_budget_goal = config_entry.data.get(CONF_BUDGET_YEARLY_ELECTRICITY)
-
-    if electricity_budget_goal:
-        nudge_type = NudgeType.ELECTRICITY_BUDGET
-        entities.extend(
-            create_budget_device(
-                config_entry=config_entry,
-                nudge_type=nudge_type,
-                energy_entities=energy_entities,
-                budget_yearly_goal=electricity_budget_goal,
-                score_entity=nudge_type_score_entity_ids[nudge_type],
-            )
-        )
-
-    heat_budget_goal = config_entry.data.get(CONF_BUDGET_YEARLY_HEAT)
-    if heat_budget_goal and gas:
-        nudge_type = NudgeType.HEAT_BUDGET
-        entities.extend(
-            create_budget_device(
-                config_entry=config_entry,
-                nudge_type=nudge_type,
-                budget_entities={gas},
-                budget_yearly_goal=heat_budget_goal,
-                score_entity=nudge_type_score_entity_ids[nudge_type],
-            )
-        )
-    water_budget_goal = config_entry.data.get(CONF_BUDGET_YEARLY_HEAT)
-    if water_budget_goal and water:
-        nudge_type = NudgeType.WATER_BUDGET
-        entities.extend(
-            create_budget_device(
-                config_entry=config_entry,
-                nudge_type=nudge_type,
-                budget_entities={water},
-                budget_yearly_goal=water_budget_goal,
-                score_entity=nudge_type_score_entity_ids[nudge_type],
-            )
-        )
-
-    async_add_entities(entities)
-
-
 def create_budget_device(
     config_entry: ConfigEntry,
     nudge_type: NudgeType,
     budget_yearly_goal: float,
     score_entity: str | None,
+    reduction_goal: int,
     energy_entities: dict[EnergyElectricDevices, str] | None = None,
     budget_entities: set[str] | None = None,
 ) -> list[Budget]:
@@ -183,6 +194,7 @@ def create_budget_device(
             score_entity=score_entity,
             nudge_type=nudge_type,
             domain=DOMAIN_NUDGE_HOUSEHOLD,
+            reduction_goal= reduction_goal
         )
         for nudge_period in NudgePeriod
     ]

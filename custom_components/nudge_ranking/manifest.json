@@ -7,7 +7,7 @@
     "version": "0.0.0",
     "requirements": [ ],
     "dependencies": [
-        "nudgeplatform"
+        "nudge_household"
     ],
     "platforms": [
         "sensor"

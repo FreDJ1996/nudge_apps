@@ -6,10 +6,8 @@ from homeassistant.components.sensor.const import DOMAIN as SENSOR_DOMAIN, Senso
 from homeassistant.components.number.const import DOMAIN as NUMBER_DOMAIN,NumberDeviceClass
 from homeassistant.helpers import selector
 from .const import DOMAIN,RANKING_PERSONS
+from custom_components.nudge_user_budget.const import DOMAIN as NUDGE_USER_DOMAIN
 
-from custom_components.nudgeplatform.const import (
-    DOMAIN as NUDGE_PLATFORM_DOMAIN,
-)
 
 DATA_SCHEMA = vol.Schema(
     {
@@ -17,7 +15,11 @@ DATA_SCHEMA = vol.Schema(
             selector.EntitySelectorConfig(
                 domain=NUMBER_DOMAIN,
                 multiple=True,
-                filter=selector.EntityFilterSelectorConfig(integration=NUDGE_PLATFORM_DOMAIN,device_class=NumberDeviceClass.AQI)
+                filter=selector.EntityFilterSelectorConfig(
+                    integration=NUDGE_USER_DOMAIN,
+                    domain="number",
+                    device_class=NumberDeviceClass.AQI
+                ),
             )
         ),
     }

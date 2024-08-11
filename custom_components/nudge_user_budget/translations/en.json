@@ -11,7 +11,8 @@
                 "data_description":
                 {
                     "username": "Person für welche der Nudge erstellt wird",
-                    "budget_yearly": "Jährliches Budget für die ausgewählten  Energiesensoren"
+                    "budget_yearly": "Jährliches Budget für die ausgewählten  Energiesensoren",
+                    "budget_electricity_reduction_goal": "Jährliches Reduktionsziel Strom Budget"
                 }
             }
         },

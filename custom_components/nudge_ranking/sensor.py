@@ -15,11 +15,7 @@ from homeassistant.helpers.device_registry import (
     DeviceInfo,
     async_get as async_get_device_registry,
 )
-from custom_components.nudge_household.const import DOMAIN_NUDGE_HOUSEHOLD
-from custom_components.nudgeplatform.const import (
-    DOMAIN as NUDGEPLATFORM_DOMAIN,
-)
-from custom_components.nudgeplatform.const import (
+from custom_components.nudge_household.platform import (
     SERVICE_SET_RANK_FOR_USER,
 )
 from homeassistant.helpers import config_validation as cv
@@ -34,6 +30,8 @@ from homeassistant.helpers.entity_registry import async_get
 from homeassistant.const import Platform
 from homeassistant.helpers.device import async_device_info_to_link_from_entity
 from homeassistant.components.sensor.const import SensorStateClass
+
+from custom_components.nudge_user_budget.const import DOMAIN as NUDGE_USER_DOMAIN
 
 SCAN_INTERVAL = timedelta(minutes=1)
 
@@ -114,7 +112,7 @@ class RankingScoreboard(SensorEntity):
         self, user_entity_id: str, ranking_position: int, ranking_length: int
     ) -> None:
         await self.hass.services.async_call(
-            domain=NUDGEPLATFORM_DOMAIN,
+            domain=NUDGE_USER_DOMAIN,
             service=SERVICE_SET_RANK_FOR_USER,
             service_data={
                 "ranking_position": ranking_position,
