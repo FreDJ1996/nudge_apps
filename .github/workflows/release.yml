@@ -20,10 +20,10 @@ jobs:
       - name: "ZIP the integration directory"
         shell: "bash"
         run: |
-          cd "${{ github.workspace }}/custom_components/powernudge"
-          zip powernudge.zip -r ./
+          cd "${{ github.workspace }}/custom_components/nudge_apps"
+          zip nudge_apps.zip -r ./
 
       - name: "Upload the ZIP file to the release"
         uses: "softprops/action-gh-release@v0.1.15"
         with:
-          files: ${{ github.workspace }}/custom_components/powernudge/powernudge.zip
+          files: ${{ github.workspace }}/custom_components/nudge_apps/nudge_apps.zip

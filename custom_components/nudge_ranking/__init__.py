@@ -1,5 +1,5 @@
 """
-Custom integration to integrate powernudge with Home Assistant.
+Custom integration to integrate ranking with Home Assistant.
 """
 
 from __future__ import annotations
