@@ -5,9 +5,7 @@
 [![License][license-shield]](LICENSE)
 
 ![Project Maintenance][maintenance-shield]
-[![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
 
-[![Discord][discord-shield]][discord]
 [![Community Forum][forum-shield]][forum]
 
 _Integration to integrate with [nudge_apps][nudge_apps]._

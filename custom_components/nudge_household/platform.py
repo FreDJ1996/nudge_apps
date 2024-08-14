@@ -240,7 +240,7 @@ async def get_own_total_consumtion(
         energy_values[EnergyElectricDevices.BATTERY_EXPORT]
         - energy_values[EnergyElectricDevices.BatteryImport]
         + energy_values[EnergyElectricDevices.SolarProduction]
-        - energy_values[EnergyElectricDevices.GridExport]
+        + energy_values[EnergyElectricDevices.GridExport]
     )
     total_consumption = (
         own_consumption + energy_values[EnergyElectricDevices.GridImport]
