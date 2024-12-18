@@ -24,6 +24,6 @@ jobs:
           zip nudge_apps.zip -r ./
 
       - name: "Upload the ZIP file to the release"
-        uses: "softprops/action-gh-release@v0.1.15"
+        uses: "softprops/action-gh-release@v2.0.8"
         with:
           files: ${{ github.workspace }}/custom_components/nudge_apps/nudge_apps.zip
